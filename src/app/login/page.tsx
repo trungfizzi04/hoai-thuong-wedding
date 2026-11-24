@@ -1,0 +1,79 @@
+import { Suspense } from "react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { LoginForm } from "@/components/auth/login-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentUser } from "@/server/dal/auth";
+
+export const metadata: Metadata = {
+  title: "Đăng nhập — Hoài Thương Wedding",
+  description: "Đăng nhập hệ thống quản lý nhân sự bưng quả đám cưới Hoài Thương Wedding.",
+};
+
+async function LoginContent({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [auth, params] = await Promise.all([getCurrentUser(), searchParams]);
+
+  if (auth) {
+    if (auth.user.role === "ADMIN") redirect("/admin");
+    if (!auth.profile) redirect("/onboarding");
+    redirect("/staff");
+  }
+
+  const nextPath = typeof params.next === "string" ? params.next : undefined;
+  const errorDesc =
+    typeof params.error_description === "string"
+      ? params.error_description
+      : typeof params.error === "string"
+        ? `Đăng nhập không thành công (${params.error}).`
+        : null;
+  const deletedNotice = params.deleted === "1";
+
+  return (
+    <LoginForm nextPath={nextPath} initialError={errorDesc} deletedNotice={deletedNotice} />
+  );
+}
+
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF9F5] px-4 py-10">
+      <div className="w-full max-w-md space-y-6">
+        <div className="flex flex-col items-center text-center">
+          <Link href="/" className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#C8D5B9] text-lg font-bold text-[#3E4A42] shadow-sm">
+            HT
+          </Link>
+          <h1 className="text-2xl font-extrabold text-[#3E4A42]">Hoài Thương Wedding</h1>
+          <p className="mt-1 text-sm text-[#4A4242]">
+            Cổng đăng ký &amp; điều phối nhân sự bưng quả
+          </p>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Đăng nhập tài khoản</CardTitle>
+            <CardDescription>
+              Phiên đăng nhập được giữ tự động trong 60 ngày để bạn đăng ký show 1 chạm.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Suspense
+              fallback={
+                <div className="py-6 text-center text-sm text-[#4A4242]">Đang tải...</div>
+              }
+            >
+              <LoginContent searchParams={searchParams} />
+            </Suspense>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

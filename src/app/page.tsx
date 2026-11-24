@@ -15,17 +15,17 @@ export default function HomePage() {
         </div>
 
         <Link
-          href="/zalo-spike"
+          href="/login"
           className="rounded-xl bg-[#E8B4B8] px-4 py-2 text-xs font-semibold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#F4D6D6] sm:text-sm"
         >
-          Test Zalo Login
+          Đăng nhập
         </Link>
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center px-4 py-10 text-center sm:px-6">
         <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#B7C9B5] bg-[#EEF3E8] px-3.5 py-1 text-xs font-medium text-[#3E4A42]">
           <span className="h-2 w-2 rounded-full bg-[#3E4A42]" />
-          Phase 0A · Kiểm thử Xác thực Zalo &amp; Deploy Render
+          Hệ thống Điều phối &amp; Tuyển dụng Nhân sự Bưng Quả
         </span>
 
         <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-[#3E4A42] sm:text-5xl">
@@ -34,31 +34,31 @@ export default function HomePage() {
         </h1>
 
         <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#4A4242] sm:text-base">
-          Hệ thống điều phối nhân sự bưng quả đám cưới giúp minh bạch lịch show, số lượng slot
-          Nam/Nữ, mức cát-xê và tự động tổng hợp bảng size áo dài cho từng ngày cưới.
+          Tạo hồ sơ một lần duy nhất, xem minh bạch lịch show đang mở, số slot Nam/Nữ còn lại,
+          mức cát-xê và tự động tổng hợp bảng size áo dài cho từng ngày cưới.
         </p>
 
         <div className="mt-8 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
           <Link
-            href="/zalo-spike"
+            href="/login"
             className="inline-flex items-center justify-center rounded-xl bg-[#E8B4B8] px-6 py-3 text-sm font-semibold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#F4D6D6]"
           >
-            Mở trang Kiểm thử Zalo Login →
+            Đăng nhập / Đăng ký bằng Zalo →
           </Link>
-          <a
-            href="/api/health"
+          <Link
+            href="/staff"
             className="inline-flex items-center justify-center rounded-xl border border-[#B7C9B5] bg-white px-6 py-3 text-sm font-semibold text-[#3E4A42] transition-colors hover:bg-[#EEF3E8]"
           >
-            Kiểm tra /api/health
-          </a>
+            Cổng Nhân sự
+          </Link>
         </div>
 
         <section className="mt-12 grid w-full grid-cols-1 gap-4 text-left sm:grid-cols-3">
           <div className="rounded-2xl border border-[#C8D5B9] bg-[#EEF3E8]/70 p-5">
-            <h2 className="text-sm font-bold text-[#3E4A42]">Đăng ký 1 chạm</h2>
+            <h2 className="text-sm font-bold text-[#3E4A42]">Hồ sơ 1 lần · Tối đa 4 ảnh</h2>
             <p className="mt-1.5 text-xs leading-relaxed text-[#4A4242]">
-              Lưu hồ sơ, chiều cao, ảnh và size áo dài một lần duy nhất; nhận show mới không cần
-              nhắn tin lặp lại.
+              Lưu chiều cao, cân nặng, size áo dài và album ảnh cá nhân bảo mật; nhận show mới
+              không cần gửi lại thông tin.
             </p>
           </div>
           <div className="rounded-2xl border border-[#C8D5B9] bg-[#EEF3E8]/70 p-5">
@@ -71,8 +71,8 @@ export default function HomePage() {
           <div className="rounded-2xl border border-[#C8D5B9] bg-[#EEF3E8]/70 p-5">
             <h2 className="text-sm font-bold text-[#3E4A42]">Kết nối mượt với Zalo</h2>
             <p className="mt-1.5 text-xs leading-relaxed text-[#4A4242]">
-              Thẻ xem trước Open Graph rõ ràng khi gửi link vào nhóm và nút xuất danh sách đã duyệt
-              cho ngày cưới.
+              Đăng nhập 1 chạm bằng Zalo, thẻ xem trước Open Graph rõ ràng và xuất danh sách đã
+              duyệt dán vào group show.
             </p>
           </div>
         </section>

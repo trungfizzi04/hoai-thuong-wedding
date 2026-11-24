@@ -122,7 +122,7 @@ export async function ZaloSpikePanel({ searchParams }: ZaloSpikePanelProps) {
 
             <div className="flex flex-wrap gap-3">
               <a
-                href="/api/auth/zalo"
+                href="/api/auth/zalo?mode=spike"
                 className="inline-flex items-center justify-center rounded-xl bg-[#E8B4B8] px-4 py-2.5 text-sm font-semibold text-[#3E4A42] transition-colors hover:bg-[#F4D6D6]"
               >
                 Đăng nhập lại bằng Zalo
@@ -138,7 +138,7 @@ export async function ZaloSpikePanel({ searchParams }: ZaloSpikePanelProps) {
         ) : (
           <div className="mt-5">
             <a
-              href="/api/auth/zalo"
+              href="/api/auth/zalo?mode=spike"
               className="inline-flex w-full items-center justify-center rounded-xl bg-[#E8B4B8] px-5 py-3 text-sm font-semibold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#F4D6D6] sm:w-auto"
             >
               Đăng nhập bằng Zalo

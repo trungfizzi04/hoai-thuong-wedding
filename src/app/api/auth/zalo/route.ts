@@ -10,15 +10,18 @@ import {
 export async function GET(request: NextRequest) {
   const origin = resolveAppOrigin(request);
   const appId = process.env.ZALO_APP_ID?.trim();
+  const mode = request.nextUrl.searchParams.get("mode");
+  const invite = request.nextUrl.searchParams.get("invite")?.trim() || null;
+  const nextPath = request.nextUrl.searchParams.get("next")?.trim() || null;
 
   if (!appId) {
-    const spikeUrl = new URL("/zalo-spike", origin);
-    spikeUrl.searchParams.set("error", "MISSING_ZALO_APP_ID");
-    spikeUrl.searchParams.set(
+    const errorTarget = new URL(mode === "spike" ? "/zalo-spike" : "/login", origin);
+    errorTarget.searchParams.set("error", "MISSING_ZALO_APP_ID");
+    errorTarget.searchParams.set(
       "error_description",
       "Chưa cấu hình biến môi trường ZALO_APP_ID trên server.",
     );
-    return NextResponse.redirect(spikeUrl);
+    return NextResponse.redirect(errorTarget);
   }
 
   const redirectUri = `${origin}/api/auth/zalo/callback`;
@@ -35,22 +38,34 @@ export async function GET(request: NextRequest) {
 
   const response = NextResponse.redirect(authUrl);
   const isSecure = origin.startsWith("https://");
-
-  response.cookies.set("zalo_code_verifier", codeVerifier, {
+  const baseCookie = {
     httpOnly: true,
     secure: isSecure,
-    sameSite: "lax",
+    sameSite: "lax" as const,
     path: "/",
     maxAge: 600,
-  });
+  };
 
-  response.cookies.set("zalo_state", state, {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 600,
-  });
+  response.cookies.set("zalo_code_verifier", codeVerifier, baseCookie);
+  response.cookies.set("zalo_state", state, baseCookie);
+
+  if (mode === "spike") {
+    response.cookies.set("zalo_auth_mode", "spike", baseCookie);
+  } else {
+    response.cookies.delete("zalo_auth_mode");
+  }
+
+  if (invite) {
+    response.cookies.set("zalo_invite_token", invite, baseCookie);
+  } else {
+    response.cookies.delete("zalo_invite_token");
+  }
+
+  if (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")) {
+    response.cookies.set("zalo_auth_next", nextPath, baseCookie);
+  } else {
+    response.cookies.delete("zalo_auth_next");
+  }
 
   return response;
 }
