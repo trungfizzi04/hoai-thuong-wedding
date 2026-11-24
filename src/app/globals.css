@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf9f5;
+  --foreground: #3e4a42;
+  --sage: #c8d5b9;
+  --sage-muted: #b7c9b5;
+  --sage-soft: #eef3e8;
+  --blush: #f4d6d6;
+  --blush-strong: #e8b4b8;
+  --ink-secondary: #4a4242;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sage: var(--sage);
+  --color-sage-muted: var(--sage-muted);
+  --color-sage-soft: var(--sage-soft);
+  --color-blush: var(--blush);
+  --color-blush-strong: var(--blush-strong);
+  --color-ink-secondary: var(--ink-secondary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+}
