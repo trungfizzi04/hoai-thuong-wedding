@@ -78,18 +78,29 @@ async function AdminOverviewContent() {
             <CardTitle className="text-3xl">{showStats?.open ?? 0}</CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-[#4A4242]">
-            Tổng show trong hệ thống: <strong>{showStats?.total ?? 0}</strong> (CRUD Show ở Phase
-            2)
+            Tổng show trong hệ thống: <strong>{showStats?.total ?? 0}</strong>
           </CardContent>
         </Card>
       </div>
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/admin/staff"
+          href="/admin/shows/new"
           className="inline-flex h-11 items-center justify-center rounded-xl bg-[#E8B4B8] px-5 text-sm font-semibold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#F4D6D6]"
         >
-          Quản lý Nhân sự &amp; Tạo Link mời 1 lần →
+          + Tạo Show bưng quả mới
+        </Link>
+        <Link
+          href="/admin/shows"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#C8D5B9] px-5 text-sm font-semibold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#B7C9B5]"
+        >
+          Lịch Show theo ngày →
+        </Link>
+        <Link
+          href="/admin/staff"
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-[#B7C9B5] bg-white px-5 text-sm font-semibold text-[#3E4A42] transition-colors hover:bg-[#EEF3E8]"
+        >
+          Quản lý Nhân sự
         </Link>
       </div>
     </div>

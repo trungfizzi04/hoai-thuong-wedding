@@ -25,18 +25,18 @@
 - [x] Tính năng quyền dữ liệu cá nhân: Xuất dữ liệu cá nhân (JSON `GET /api/me/export`) & Xóa/Ẩn danh tài khoản (xóa toàn bộ ảnh trên Cloudinary + thu hồi `sessions`, giữ lại bản ghi thanh toán ẩn danh)
 
 ## Phase 2: Quản lý Show (Admin) & Đăng ký / Tự hủy bảo vệ Waitlist (Staff)
-- [ ] Admin: CRUD Show (`requireAdmin()`; Slot Nam/Nữ riêng, `gatherAt`/`endAt` `timestamptz` hiển thị `Asia/Ho_Chi_Minh`, địa chỉ, quận, `wagePerPerson`, `allowanceNote`, trang phục, link group Zalo, thông tin khách chỉ Admin thấy); khi sửa `requiredMale`/`requiredFemale` bắt buộc khóa dòng show (`withLockedShow`), chặn giảm thấp hơn số đã `APPROVED` và ghi `audit_logs`
-- [ ] Admin: Màn hình Lịch theo ngày (nhiều show song song) & nút Copy tin tuyển show
-- [ ] Trang công khai `/shows/[id]` (không cần đăng nhập để Zalo bot đọc Open Graph; chỉ hiện thông tin tuyển dụng công khai)
-- [ ] Staff (Mobile-First): Bảng tin Show đang mở & Server Action đăng ký 1 chạm (`requireUser()` — cho phép cả `PENDING_APPROVAL` đã điền đủ hồ sơ đăng ký ngay, không chặn cứng trùng lịch, dùng **upsert** hỗ trợ đăng ký lại sau hủy)
-- [ ] Staff: Tự hủy đăng ký (tự do khi `PENDING`/`WAITLIST`; khi `APPROVED` chỉ cho tự hủy trước `gatherAt` ≥ 24h trong `withLockedShow`, lưu `cancelledBy`/`cancelledAt`/`cancelReason` + `audit_logs`: nếu có `WAITLIST` cùng giới tính thì giữ đóng công khai chờ Admin đôn dự bị, chỉ khi `WAITLIST` trống mới mở lại `OPEN`)
+- [x] Admin: CRUD Show (`requireAdmin()`; Slot Nam/Nữ riêng, `gatherAt`/`endAt` `timestamptz` hiển thị `Asia/Ho_Chi_Minh`, địa chỉ, quận, `wagePerPerson`, `allowanceNote`, trang phục, link group Zalo, thông tin khách chỉ Admin thấy); khi sửa `requiredMale`/`requiredFemale` bắt buộc khóa dòng show (`withLockedShow`), chặn giảm thấp hơn số đã `APPROVED` và ghi `audit_logs`
+- [x] Admin: Màn hình Lịch theo ngày (nhiều show song song) & nút Copy tin tuyển show
+- [x] Trang công khai `/shows/[id]` (không cần đăng nhập để Zalo bot đọc Open Graph; chỉ hiện thông tin tuyển dụng công khai)
+- [x] Staff (Mobile-First): Bảng tin Show đang mở & Server Action đăng ký 1 chạm (`requireUser()` — cho phép cả `PENDING_APPROVAL` đã điền đủ hồ sơ đăng ký ngay, không chặn cứng trùng lịch, dùng **upsert** hỗ trợ đăng ký lại sau hủy)
+- [x] Staff: Tự hủy đăng ký (tự do khi `PENDING`/`WAITLIST`; khi `APPROVED` chỉ cho tự hủy trước `gatherAt` ≥ 24h trong `withLockedShow`, lưu `cancelledBy`/`cancelledAt`/`cancelReason` + `audit_logs`: nếu có `WAITLIST` cùng giới tính thì giữ đóng công khai chờ Admin đôn dự bị, chỉ khi `WAITLIST` trống mới mở lại `OPEN`)
 
 ## Phase 3: Duyệt nhanh, Xác minh Danh tính & Khóa Slot Transaction
-- [ ] Admin: Hiển thị khối xác minh (**Tên Zalo + SĐT + Ảnh** + checkbox *"Đã xác minh danh tính"*) đối với ứng viên `PENDING_APPROVAL`, và **nhãn cảnh báo đỏ** nếu trùng khung giờ hoặc vi phạm **khoảng đệm di chuyển 60 phút**
-- [ ] Admin: Server Action duyệt / hạ duyệt / đôn dự bị (`requireAdmin()`) dùng chung `withLockedShow(tx, showId)` (`SELECT ... FROM shows WHERE id = $1 FOR UPDATE`) → đếm `APPROVED` theo giới tính → cập nhật trạng thái (`reviewedBy`, `reviewedAt`), nâng `PENDING_APPROVAL -> ACTIVE` khi đã tick xác minh (`verifiedBy`, `verifiedAt`), tự đóng/mở show và ghi `audit_logs`
-- [ ] Admin: Tự động đếm `Nam: x/y • Nữ: x/y`, Bảng thống kê Size áo dài (`S, M, L, XL, XXL, 3XL`) tách riêng Nam/Nữ, hiển thị ảnh qua `/api/photos/[staffId]`
-- [ ] Staff: Mục "Lịch của tôi" với nút Xác nhận đi show (Confirm 1 chạm) & nút Vào group Zalo show (chỉ hiện khi `APPROVED`)
-- [ ] Admin: Bộ lọc "Ai chưa Confirm" & nút Xuất danh sách đã duyệt (text format) dán vào group Zalo show
+- [x] Admin: Hiển thị khối xác minh (**Tên Zalo + SĐT + 4 Ảnh cá nhân** + checkbox *"Đã xác minh danh tính"*) đối với ứng viên `PENDING_APPROVAL` *(cảnh báo trùng khung giờ + buffer 60 phút tạm hoãn theo yêu cầu)*
+- [x] Admin: Server Action duyệt / hạ duyệt / đôn dự bị (`requireAdmin()`) dùng chung `withLockedShow(showId)` (`SELECT ... FROM shows WHERE id = $1 FOR UPDATE`) → đếm `APPROVED` theo giới tính → cập nhật trạng thái (`reviewedBy`, `reviewedAt`), nâng `PENDING_APPROVAL -> ACTIVE` khi đã tick xác minh (`verifiedBy`, `verifiedAt`), tự đóng/mở show (bảo vệ `WAITLIST`) và ghi `audit_logs`
+- [x] Admin: Tự động đếm `Nam: x/y • Nữ: x/y`, Bảng thống kê Size áo dài (`S, M, L, XL, XXL, 3XL`) tách riêng Nam/Nữ, hiển thị ảnh qua `/api/photos/[staffId]`
+- [x] Staff: Mục "Lịch của tôi" với nút Xác nhận đi show (Confirm 1 chạm) & nút Vào group Zalo show (chỉ hiện khi `APPROVED`)
+- [x] Admin: Bộ lọc "Chưa Confirm" & nút Xuất danh sách đã duyệt (text format kèm tổng hợp Size áo) dán vào group Zalo show
 
 ## Phase 4: Kiểm thử Toàn diện & Deploy Render Starter (Singapore)
 - [ ] Kiểm thử Desktop & Mobile (375px), kiểm thử gọi trái phép mọi Server Action / DAL / `/api/photos/[staffId]`

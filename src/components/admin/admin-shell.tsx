@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, LogOut, Users } from "lucide-react";
+import { CalendarDays, LayoutDashboard, LogOut, Users } from "lucide-react";
 import { logoutAction } from "@/server/actions/auth";
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -24,6 +24,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Tổng quan</span>
+            </Link>
+            <Link
+              href="/admin/shows"
+              className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-[#3E4A42] hover:bg-[#EEF3E8]"
+            >
+              <CalendarDays className="h-4 w-4" />
+              Show
             </Link>
             <Link
               href="/admin/staff"
