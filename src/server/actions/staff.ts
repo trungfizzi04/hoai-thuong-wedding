@@ -106,6 +106,8 @@ export async function anonymizeMyAccountAction() {
         zaloId: null,
         zaloName: null,
         zaloAvatarUrl: null,
+        zaloIsSensitive: null,
+        zaloRawProfile: null,
         status: "SUSPENDED",
       })
       .where(eq(users.id, auth.user.id));

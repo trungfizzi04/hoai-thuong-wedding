@@ -8,6 +8,16 @@ export const vietnamPhoneSchema = z
   .trim()
   .regex(/^0\d{9,10}$/, "Số điện thoại phải bắt đầu bằng số 0 và gồm 10–11 chữ số.");
 
+export const adminLoginSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, "Tên đăng nhập tối thiểu 3 ký tự.")
+    .max(50)
+    .regex(/^[a-zA-Z0-9._-]+$/, "Tên đăng nhập chỉ gồm chữ, số và ký tự . _ -"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự.").max(100),
+});
+
 export const loginPasswordSchema = z.object({
   phone: vietnamPhoneSchema,
   password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự.").max(100),

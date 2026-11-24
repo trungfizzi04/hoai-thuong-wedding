@@ -6,6 +6,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   activateInvitePasswordSchema,
+  adminLoginSchema,
   loginPasswordSchema,
 } from "@/lib/validations/auth";
 import {
@@ -38,6 +39,71 @@ async function getClientIp(): Promise<string> {
     return forwarded.split(",")[0]?.trim() || "unknown";
   }
   return headerList.get("x-real-ip")?.trim() || "unknown";
+}
+
+export async function loginAdminAction(input: {
+  username: string;
+  password: string;
+  nextPath?: string;
+}): Promise<ActionResult> {
+  const parsed = adminLoginSchema.safeParse({
+    username: input.username,
+    password: input.password,
+  });
+
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message || "Thông tin chưa hợp lệ." };
+  }
+
+  const username = parsed.data.username.toLowerCase();
+  const { password } = parsed.data;
+  const ipAddress = await getClientIp();
+  const rateKey = `admin:${username}`;
+
+  const rateLimit = await checkLoginRateLimit(rateKey, ipAddress);
+  if (!rateLimit.allowed) {
+    const minutes = Math.max(1, Math.ceil((rateLimit.retryAfterSeconds ?? 60) / 60));
+    return {
+      ok: false,
+      error: `Nhập sai quá nhiều lần. Vui lòng thử lại sau ${minutes} phút.`,
+    };
+  }
+
+  if (rateLimit.delayMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, rateLimit.delayMs));
+  }
+
+  const db = getDb();
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.username, username))
+    .limit(1);
+
+  if (!user || !user.passwordHash || user.role !== "ADMIN") {
+    await recordFailedLogin(rateKey, ipAddress);
+    return { ok: false, error: "Tên đăng nhập hoặc mật khẩu Quản trị không đúng." };
+  }
+
+  if (user.status !== "ACTIVE") {
+    return { ok: false, error: "Tài khoản Quản trị đang bị khóa." };
+  }
+
+  const passwordValid = await bcrypt.compare(password, user.passwordHash);
+  if (!passwordValid) {
+    await recordFailedLogin(rateKey, ipAddress);
+    return { ok: false, error: "Tên đăng nhập hoặc mật khẩu Quản trị không đúng." };
+  }
+
+  await clearFailedLogin(rateKey, ipAddress);
+  const { rawToken, expiresAt } = await createDbSession(user.id);
+  await setSessionCookie(rawToken, expiresAt);
+
+  const target =
+    input.nextPath && input.nextPath.startsWith("/admin") && input.nextPath !== "/admin/login"
+      ? input.nextPath
+      : "/admin";
+  return { ok: true, redirectTo: target };
 }
 
 export async function loginWithPasswordAction(input: {

@@ -9,26 +9,36 @@ async function seed() {
 
   console.log("Seeding Hoài Thương Wedding database...");
 
-  // 1. Admin account (linked with owner's verified Zalo ID + fallback phone/password)
+  // 1. Admin account (dedicated username + password, completely separate from personal Zalo)
   const adminPasswordHash = await bcrypt.hash("Admin@123456", 12);
   const [existingAdmin] = await db
     .select()
     .from(users)
-    .where(eq(users.loginPhone, "0900000001"))
+    .where(eq(users.role, "ADMIN"))
     .limit(1);
 
   let adminId: string;
   if (existingAdmin) {
     adminId = existingAdmin.id;
-    console.log("Admin already exists:", existingAdmin.id);
+    await db
+      .update(users)
+      .set({
+        username: "admin",
+        zaloId: null,
+        zaloName: null,
+        zaloAvatarUrl: null,
+        zaloIsSensitive: null,
+        zaloRawProfile: null,
+      })
+      .where(eq(users.id, existingAdmin.id));
+    console.log("Updated Admin (username='admin', detached personal Zalo):", existingAdmin.id);
   } else {
     const [createdAdmin] = await db
       .insert(users)
       .values({
+        username: "admin",
         loginPhone: "0900000001",
         passwordHash: adminPasswordHash,
-        zaloId: "5209053559986499314",
-        zaloName: "Tiến Trung",
         role: "ADMIN",
         status: "ACTIVE",
       })
@@ -36,7 +46,7 @@ async function seed() {
 
     if (!createdAdmin) throw new Error("Failed to seed admin user.");
     adminId = createdAdmin.id;
-    console.log("Created Admin:", createdAdmin.id);
+    console.log("Created Admin (username='admin'):", createdAdmin.id);
   }
 
   // 2. Sample Staff (2 Male, 2 Female)

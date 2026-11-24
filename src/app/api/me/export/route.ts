@@ -35,9 +35,13 @@ export async function GET() {
     legalBasis: "Luật Bảo vệ dữ liệu cá nhân 2025 & Nghị định 356/2025/NĐ-CP",
     account: {
       id: auth.user.id,
+      username: auth.user.username,
       loginPhone: auth.user.loginPhone,
       zaloId: auth.user.zaloId,
       zaloName: auth.user.zaloName,
+      zaloAvatarUrl: auth.user.zaloAvatarUrl,
+      zaloIsSensitive: auth.user.zaloIsSensitive,
+      zaloRawProfile: auth.user.zaloRawProfile,
       role: auth.user.role,
       status: auth.user.status,
       createdAt: auth.user.createdAt,

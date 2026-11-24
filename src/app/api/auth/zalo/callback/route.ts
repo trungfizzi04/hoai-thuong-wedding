@@ -152,6 +152,8 @@ export async function GET(request: NextRequest) {
     const zaloId = profile.id;
     const zaloName = profile.name ?? null;
     const zaloAvatarUrl = profile.picture?.data?.url ?? null;
+    const zaloIsSensitive = typeof profile.is_sensitive === "boolean" ? profile.is_sensitive : null;
+    const zaloRawProfile: Record<string, unknown> = { ...profile };
 
     // 1. Check if this Zalo account is already linked
     const [existingUser] = await db
@@ -174,7 +176,7 @@ export async function GET(request: NextRequest) {
 
       const [updated] = await db
         .update(users)
-        .set({ zaloName, zaloAvatarUrl })
+        .set({ zaloName, zaloAvatarUrl, zaloIsSensitive, zaloRawProfile })
         .where(eq(users.id, targetUser.id))
         .returning();
       if (updated) targetUser = updated;
@@ -211,6 +213,8 @@ export async function GET(request: NextRequest) {
             zaloId,
             zaloName,
             zaloAvatarUrl,
+            zaloIsSensitive,
+            zaloRawProfile,
             status: "ACTIVE",
           })
           .where(eq(users.id, inviteRow.userId))
@@ -245,6 +249,8 @@ export async function GET(request: NextRequest) {
           zaloId,
           zaloName,
           zaloAvatarUrl,
+          zaloIsSensitive,
+          zaloRawProfile,
           role: "STAFF",
           status: "PENDING_APPROVAL",
         })

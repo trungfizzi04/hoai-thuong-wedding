@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CalendarDays, UserCheck, Users } from "lucide-react";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/dal/auth";
 import { getDb } from "@/server/db";
@@ -10,7 +11,7 @@ import { shows, users } from "@/server/db/schema";
 
 async function AdminOverviewContent() {
   const auth = await getCurrentUser();
-  if (!auth) redirect("/login?next=/admin");
+  if (!auth) redirect("/admin/login?next=/admin");
   if (auth.user.role !== "ADMIN" || auth.user.status !== "ACTIVE") {
     redirect("/staff");
   }
@@ -97,14 +98,16 @@ async function AdminOverviewContent() {
 
 export default function AdminHomePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-          Đang tải tổng quan...
-        </div>
-      }
-    >
-      <AdminOverviewContent />
-    </Suspense>
+    <AdminShell>
+      <Suspense
+        fallback={
+          <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
+            Đang tải tổng quan...
+          </div>
+        }
+      >
+        <AdminOverviewContent />
+      </Suspense>
+    </AdminShell>
   );
 }

@@ -15,6 +15,13 @@
       "when": 1795529006763,
       "tag": "0001_demonic_daimon_hellstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795533251067,
+      "tag": "0002_stormy_masked_marvel",
+      "breakpoints": true
     }
   ]
 }

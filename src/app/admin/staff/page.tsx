@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { AdminShell } from "@/components/admin/admin-shell";
 import { StaffManager, type AdminStaffListItem } from "@/components/admin/staff-manager";
 import { getCurrentUser } from "@/server/dal/auth";
 import { getDb } from "@/server/db";
@@ -8,7 +9,7 @@ import { staffProfiles, users } from "@/server/db/schema";
 
 async function AdminStaffContent() {
   const auth = await getCurrentUser();
-  if (!auth) redirect("/login?next=/admin/staff");
+  if (!auth) redirect("/admin/login?next=/admin/staff");
   if (auth.user.role !== "ADMIN" || auth.user.status !== "ACTIVE") {
     redirect("/staff");
   }
@@ -50,23 +51,25 @@ async function AdminStaffContent() {
 
 export default function AdminStaffPage() {
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-extrabold text-[#3E4A42]">Quản lý Nhân sự</h1>
-        <p className="mt-1 text-sm text-[#4A4242]">
-          Tạo nhân sự khung, gửi link kích hoạt 1 lần qua Zalo cá nhân, xem bộ 4 ảnh cá nhân và
-          xác minh danh tính.
-        </p>
+    <AdminShell>
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#3E4A42]">Quản lý Nhân sự</h1>
+          <p className="mt-1 text-sm text-[#4A4242]">
+            Tạo nhân sự khung, gửi link kích hoạt 1 lần qua Zalo cá nhân, xem bộ 4 ảnh cá nhân và
+            xác minh danh tính.
+          </p>
+        </div>
+        <Suspense
+          fallback={
+            <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
+              Đang tải danh sách nhân sự...
+            </div>
+          }
+        >
+          <AdminStaffContent />
+        </Suspense>
       </div>
-      <Suspense
-        fallback={
-          <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-            Đang tải danh sách nhân sự...
-          </div>
-        }
-      >
-        <AdminStaffContent />
-      </Suspense>
-    </div>
+    </AdminShell>
   );
 }
