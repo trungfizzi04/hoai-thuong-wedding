@@ -43,7 +43,7 @@ export default function StaffSchedulePage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-extrabold text-ink">Lịch của tôi</h1>
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Lịch của tôi</h1>
         <p className="text-xs text-ink-secondary">
           Theo dõi trạng thái các show bạn đã đăng ký và vào group Zalo show khi được duyệt.
         </p>

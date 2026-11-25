@@ -37,12 +37,22 @@ async function AdminOverviewContent() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-ink">Bảng điều khiển Quản trị</h1>
-        <p className="mt-1 text-sm text-ink-secondary">
-          Chào {auth.user.zaloName || "Admin"} — quản lý nhân sự, xác minh danh tính và show bưng
-          quả.
-        </p>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">
+            Bảng điều khiển Quản trị
+          </h1>
+          <p className="mt-1 text-sm text-ink-secondary">
+            Chào {auth.user.zaloName || "Admin"} — quản lý nhân sự, xác minh danh tính và show bưng
+            quả.
+          </p>
+        </div>
+        <Link
+          href="/admin/shows/new"
+          className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-blush-strong px-5 text-sm font-semibold text-ink transition-colors hover:bg-blush"
+        >
+          + Tạo Show mới
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -86,14 +96,8 @@ async function AdminOverviewContent() {
 
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/admin/shows/new"
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-blush-strong px-5 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-blush"
-        >
-          + Tạo Show bưng quả mới
-        </Link>
-        <Link
           href="/admin/shows"
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-sage px-5 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-sage-muted"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-sage px-5 text-sm font-semibold text-ink transition-colors hover:bg-sage-muted"
         >
           Lịch Show theo ngày →
         </Link>

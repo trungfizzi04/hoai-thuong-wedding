@@ -40,7 +40,7 @@ async function StaffHomeContent() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-surface p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-surface p-4">
         <div>
           <p className="text-base font-bold text-ink">Chào {profile.fullName}!</p>
           <p className="text-xs text-ink-secondary">

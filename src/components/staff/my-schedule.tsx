@@ -125,7 +125,7 @@ export function StaffMySchedule({ items }: { items: StaffScheduleItem[] }) {
                           </Badge>
                         ) : null}
                       </div>
-                      <h2 className="mt-1.5 text-base font-bold text-ink">
+                      <h2 className="mt-1.5 font-sans text-base font-semibold text-ink">
                         {item.show.title}
                       </h2>
                     </div>

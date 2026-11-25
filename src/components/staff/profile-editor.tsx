@@ -7,6 +7,7 @@ import { PhotoLightbox } from "@/components/staff/photo-lightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useConfirm } from "@/components/ui/modal";
@@ -465,18 +466,17 @@ export function ProfileEditor({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-1.5">
-                <Label htmlFor="p-gender">Giới tính</Label>
-                <select
-                  id="p-gender"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value as "MALE" | "FEMALE")}
-                  className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
-                >
-                  <option value="FEMALE">Nữ</option>
-                  <option value="MALE">Nam</option>
-                </select>
+                <Label>Giới tính</Label>
+                <div className="flex gap-2">
+                  <Chip active={gender === "FEMALE"} onClick={() => setGender("FEMALE")} className="flex-1">
+                    Nữ
+                  </Chip>
+                  <Chip active={gender === "MALE"} onClick={() => setGender("MALE")} className="flex-1">
+                    Nam
+                  </Chip>
+                </div>
               </div>
 
               <div className="space-y-1.5">
@@ -484,6 +484,7 @@ export function ProfileEditor({
                 <Input
                   id="p-height"
                   type="number"
+                  inputMode="numeric"
                   min={140}
                   max={210}
                   value={heightCm}
@@ -497,6 +498,7 @@ export function ProfileEditor({
                 <Input
                   id="p-weight"
                   type="number"
+                  inputMode="numeric"
                   min={35}
                   max={130}
                   placeholder="Tùy chọn"
@@ -504,21 +506,16 @@ export function ProfileEditor({
                   onChange={(e) => setWeightKg(e.target.value)}
                 />
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="p-size">Size áo dài</Label>
-                <select
-                  id="p-size"
-                  value={aoDaiSize}
-                  onChange={(e) => setAoDaiSize(e.target.value as (typeof AO_DAI_SIZES)[number])}
-                  className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
-                >
-                  {AO_DAI_SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
+            <div className="space-y-1.5">
+              <Label>Size áo dài</Label>
+              <div className="flex flex-wrap gap-2">
+                {AO_DAI_SIZES.map((s) => (
+                  <Chip key={s} active={aoDaiSize === s} onClick={() => setAoDaiSize(s)}>
+                    {s}
+                  </Chip>
+                ))}
               </div>
             </div>
 

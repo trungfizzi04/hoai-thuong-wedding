@@ -33,7 +33,7 @@ export function LoginForm({ nextPath, initialError, deletedNotice }: LoginFormPr
       <div className="space-y-3">
         <a
           href={zaloHref}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blush-strong px-5 text-sm font-bold text-ink shadow-sm transition-colors hover:bg-blush"
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-blush-strong px-5 text-sm font-semibold text-ink transition-colors hover:bg-blush"
         >
           Đăng nhập 1 chạm bằng Zalo
         </a>

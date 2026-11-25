@@ -19,7 +19,7 @@ export default function NewShowPage() {
     <AdminShell>
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-ink">Tạo Show Bưng Quả Mới</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Tạo Show Bưng Quả Mới</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             Sau khi tạo, bạn có thể bấm Copy tin tuyển kèm link đăng ký 1 chạm để gửi vào group
             Zalo.

@@ -41,7 +41,7 @@ export default function AdminShowsPage() {
     <AdminShell>
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-ink">Lịch Show theo Ngày</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Lịch Show theo Ngày</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             Tạo show, quản lý nhiều đám cưới cùng ngày và copy tin tuyển show dán thẳng vào group
             Zalo.

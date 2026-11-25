@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
@@ -185,18 +186,17 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label htmlFor="gender">3. Giới tính</Label>
-          <select
-            id="gender"
-            value={gender}
-            onChange={(e) => setGender(e.target.value as "MALE" | "FEMALE")}
-            className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-line-strong"
-          >
-            <option value="FEMALE">Nữ (nhà gái)</option>
-            <option value="MALE">Nam (nhà trai)</option>
-          </select>
+          <Label>3. Giới tính</Label>
+          <div className="flex gap-2">
+            <Chip active={gender === "FEMALE"} onClick={() => setGender("FEMALE")} className="flex-1">
+              Nữ (nhà gái)
+            </Chip>
+            <Chip active={gender === "MALE"} onClick={() => setGender("MALE")} className="flex-1">
+              Nam (nhà trai)
+            </Chip>
+          </div>
         </div>
 
         <div className="space-y-1.5">
@@ -215,19 +215,14 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="aoDaiSize">5. Size áo dài</Label>
-        <select
-          id="aoDaiSize"
-          value={aoDaiSize}
-          onChange={(e) => setAoDaiSize(e.target.value as (typeof AO_DAI_SIZES)[number])}
-          className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-line-strong"
-        >
+        <Label>5. Size áo dài</Label>
+        <div className="flex flex-wrap gap-2">
           {AO_DAI_SIZES.map((s) => (
-            <option key={s} value={s}>
-              Size {s}
-            </option>
+            <Chip key={s} active={aoDaiSize === s} onClick={() => setAoDaiSize(s)}>
+              {s}
+            </Chip>
           ))}
-        </select>
+        </div>
       </div>
 
       <div className="space-y-2">

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { registerForShowAction } from "@/server/actions/registrations";
 
 interface PublicRegisterButtonProps {
@@ -31,7 +32,7 @@ export function PublicRegisterButton({
   existingStatus,
 }: PublicRegisterButtonProps) {
   const router = useRouter();
-  const [notice, setNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const toast = useToast();
   const [isPending, startTransition] = useTransition();
 
   if (showStatus !== "OPEN") {
@@ -47,7 +48,7 @@ export function PublicRegisterButton({
       <div className="space-y-2">
         <Link
           href={`/login?next=${encodeURIComponent(`/shows/${showId}`)}`}
-          className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-6 text-sm font-bold text-ink shadow-sm transition-colors hover:bg-blush"
+          className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-6 text-sm font-semibold text-ink transition-colors hover:bg-blush"
         >
           Đăng nhập Zalo để đăng ký 1 chạm →
         </Link>
@@ -73,7 +74,7 @@ export function PublicRegisterButton({
     return (
       <Link
         href="/onboarding"
-        className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-6 text-sm font-bold text-ink shadow-sm hover:bg-blush"
+        className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-6 text-sm font-semibold text-ink hover:bg-blush"
       >
         Hoàn tất hồ sơ 1 lần để đăng ký show →
       </Link>
@@ -116,35 +117,20 @@ export function PublicRegisterButton({
   }
 
   function handleRegister() {
-    setNotice(null);
     startTransition(async () => {
       const res = await registerForShowAction(showId);
       if (!res.ok) {
-        setNotice({ type: "err", text: res.error || "Đăng ký thất bại." });
+        toast.error(res.error || "Đăng ký thất bại.");
         return;
       }
-      setNotice({ type: "ok", text: res.message || "Đăng ký thành công!" });
+      toast.success(res.message || "Đăng ký thành công!");
       router.refresh();
     });
   }
 
   return (
-    <div className="space-y-3">
-      {notice ? (
-        <div
-          className={
-            notice.type === "ok"
-              ? "rounded-xl border border-line-strong bg-sage-soft p-3 text-xs text-ink"
-              : "rounded-xl border border-blush-strong bg-blush/60 p-3 text-xs text-ink-secondary"
-          }
-        >
-          {notice.text}
-        </div>
-      ) : null}
-
-      <Button type="button" size="lg" className="w-full" disabled={isPending} onClick={handleRegister}>
-        {isPending ? "Đang gửi đăng ký..." : "Đăng ký nhận show ngay (1 chạm)"}
-      </Button>
-    </div>
+    <Button type="button" size="lg" className="w-full" disabled={isPending} onClick={handleRegister}>
+      {isPending ? "Đang gửi đăng ký..." : "Đăng ký nhận show ngay (1 chạm)"}
+    </Button>
   );
 }

@@ -53,7 +53,7 @@ export default function EditShowPage({ params }: { params: Promise<{ id: string 
     <AdminShell>
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-ink">Chỉnh sửa Show</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Chỉnh sửa Show</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             Hệ thống tự khóa dòng dữ liệu để bảo vệ số slot đã duyệt khi bạn chỉnh sửa.
           </p>

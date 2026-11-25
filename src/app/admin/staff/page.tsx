@@ -55,7 +55,7 @@ export default function AdminStaffPage() {
     <AdminShell>
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-ink">Quản lý Nhân sự</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Quản lý Nhân sự</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             Tạo nhân sự khung, gửi link kích hoạt 1 lần qua Zalo cá nhân, xem bộ 4 ảnh cá nhân và
             xác minh danh tính.

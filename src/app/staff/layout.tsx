@@ -38,7 +38,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-24 md:px-8 md:py-10 md:pb-10">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 pb-28 md:px-8 md:py-10 md:pb-10">
         {children}
       </main>
 

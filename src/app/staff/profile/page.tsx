@@ -33,7 +33,7 @@ export default function StaffProfilePage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-extrabold text-ink">Hồ sơ cá nhân</h1>
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-ink">Hồ sơ cá nhân</h1>
         <p className="text-xs text-ink-secondary">
           Quản lý số đo, size áo dài và tối đa 4 ảnh cá nhân của bạn.
         </p>

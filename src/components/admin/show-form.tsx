@@ -110,6 +110,7 @@ export function ShowForm({ initialData }: { initialData?: ShowFormInitialData })
   const [totalRevenue, setTotalRevenue] = useState(initialData?.totalRevenue ?? "");
 
   const [error, setError] = useState<string | null>(null);
+  const [districtMissing, setDistrictMissing] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const gatherAtLocal = date && startTime ? `${date}T${startTime}` : "";
@@ -172,6 +173,16 @@ export function ShowForm({ initialData }: { initialData?: ShowFormInitialData })
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (district.trim().length < 2) {
+      setDistrictMissing(true);
+      const msg = "Vui lòng chọn đầy đủ Tỉnh/TP & Phường/Xã (hoặc nhập tay khu vực).";
+      setError(msg);
+      toast.error(msg);
+      document.getElementById("show-location-picker")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    setDistrictMissing(false);
 
     const payload = {
       title,
@@ -271,9 +282,27 @@ export function ShowForm({ initialData }: { initialData?: ShowFormInitialData })
               required
             />
           </Field>
-          <div className="space-y-1.5">
+          <div
+            id="show-location-picker"
+            className={
+              districtMissing
+                ? "space-y-1.5 rounded-xl border border-blush-strong bg-blush/20 p-3"
+                : "space-y-1.5"
+            }
+          >
             <Label>Khu vực (Tỉnh / Quận / Phường)</Label>
-            <LocationPicker value={district} onChange={setDistrict} />
+            <LocationPicker
+              value={district}
+              onChange={(v) => {
+                setDistrict(v);
+                if (v.trim().length >= 2) setDistrictMissing(false);
+              }}
+            />
+            {districtMissing ? (
+              <p className="text-xs text-rose-700 dark:text-rose-300">
+                Vui lòng chọn xong Phường/Xã (hoặc chuyển sang Nhập tay).
+              </p>
+            ) : null}
           </div>
         </Section>
 
@@ -383,7 +412,7 @@ export function ShowForm({ initialData }: { initialData?: ShowFormInitialData })
           </div>
         </Section>
 
-        <div className="sticky bottom-16 z-20 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none lg:bottom-0">
+        <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-20 -mx-4 flex flex-wrap items-center gap-3 border-t border-line bg-paper/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
           <Button type="submit" size="lg" disabled={isPending}>
             {isPending ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo show & mở tuyển"}
           </Button>

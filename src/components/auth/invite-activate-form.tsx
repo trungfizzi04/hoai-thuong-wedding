@@ -25,7 +25,7 @@ export function InviteActivateForm({
       <div className="space-y-2.5">
         <a
           href={`/api/auth/zalo?invite=${encodeURIComponent(token)}`}
-          className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-5 text-sm font-bold text-ink shadow-sm transition-colors hover:bg-blush"
+          className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-5 text-sm font-semibold text-ink transition-colors hover:bg-blush"
         >
           Kích hoạt 1 chạm bằng Zalo
         </a>

@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast";
 import {
   createInvitedStaffAction,
   regenerateInviteLinkAction,
@@ -52,12 +53,12 @@ const STATUS_FILTERS = [
 
 export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] }) {
   const router = useRouter();
+  const toast = useToast();
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]["key"]>("ALL");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [inviteBox, setInviteBox] = useState<{ url: string; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
-  const [notice, setNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [lightbox, setLightbox] = useState<{ staffId: string; index: number; count: number } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -66,13 +67,12 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
 
   function handleCreateInvite(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setNotice(null);
     setInviteBox(null);
 
     startTransition(async () => {
       const res = await createInvitedStaffAction({ fullName, phone });
       if (!res.ok) {
-        setNotice({ type: "err", text: res.error || "Không thể tạo nhân sự." });
+        toast.error(res.error || "Không thể tạo nhân sự.");
         return;
       }
       setFullName("");
@@ -80,54 +80,50 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
       if (res.inviteUrl && res.inviteMessage) {
         setInviteBox({ url: res.inviteUrl, message: res.inviteMessage });
       }
-      setNotice({ type: "ok", text: "Đã tạo hồ sơ khung và sinh link kích hoạt 1 lần (72 giờ)." });
+      toast.success("Đã tạo hồ sơ khung và sinh link kích hoạt 1 lần (72 giờ).");
       router.refresh();
     });
   }
 
   function handleRegenerate(userId: string) {
-    setNotice(null);
     startTransition(async () => {
       const res = await regenerateInviteLinkAction(userId);
       if (!res.ok) {
-        setNotice({ type: "err", text: res.error || "Không tạo lại được link." });
+        toast.error(res.error || "Không tạo lại được link.");
         return;
       }
       if (res.inviteUrl && res.inviteMessage) {
         setInviteBox({ url: res.inviteUrl, message: res.inviteMessage });
       }
-      setNotice({ type: "ok", text: "Đã tạo link kích hoạt mới (hiệu lực 72 giờ)." });
+      toast.success("Đã tạo link kích hoạt mới (hiệu lực 72 giờ).");
       router.refresh();
     });
   }
 
   function handleVerify(userId: string) {
-    setNotice(null);
     startTransition(async () => {
       const res = await verifyStaffAction(userId);
       if (!res.ok) {
-        setNotice({ type: "err", text: res.error || "Xác minh thất bại." });
+        toast.error(res.error || "Xác minh thất bại.");
         return;
       }
-      setNotice({ type: "ok", text: "Đã xác minh danh tính nhân sự (ACTIVE)." });
+      toast.success("Đã xác minh danh tính nhân sự (ACTIVE).");
       router.refresh();
     });
   }
 
   function handleToggleSuspend(userId: string, suspend: boolean) {
-    setNotice(null);
     startTransition(async () => {
       const res = await toggleSuspendStaffAction(userId, suspend);
       if (!res.ok) {
-        setNotice({ type: "err", text: res.error || "Thao tác thất bại." });
+        toast.error(res.error || "Thao tác thất bại.");
         return;
       }
-      setNotice({
-        type: "ok",
-        text: suspend
+      toast.success(
+        suspend
           ? "Đã khóa tài khoản và thu hồi toàn bộ phiên đăng nhập."
           : "Đã mở khóa tài khoản nhân sự.",
-      });
+      );
       router.refresh();
     });
   }
@@ -135,6 +131,7 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
   async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
     setCopied(true);
+    toast.success("Đã sao chép vào bộ nhớ tạm.");
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -182,18 +179,6 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
               </Button>
             </div>
           </form>
-
-          {notice ? (
-            <div
-              className={
-                notice.type === "ok"
-                  ? "rounded-xl border border-line-strong bg-sage-soft p-3 text-xs text-ink"
-                  : "rounded-xl border border-blush-strong bg-blush/60 p-3 text-xs text-ink-secondary"
-              }
-            >
-              {notice.text}
-            </div>
-          ) : null}
 
           {inviteBox ? (
             <div className="space-y-2 rounded-xl border border-line-strong bg-sage-soft p-4 text-xs text-ink">

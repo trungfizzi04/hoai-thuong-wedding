@@ -27,17 +27,17 @@ ssh root@160.187.229.48
 
 #### A. Cập nhật NHANH *(khi chỉ sửa code UI/API, không đổi `package.json` hay DB)*
 ```bash
-cd /var/www/hoai-thuong-wedding && git pull && pnpm build && pm2 restart hoai-thuong-wedding
+cd /var/www/hoai-thuong-wedding && git pull && rm -rf .next && pnpm build && pm2 restart hoai-thuong-wedding
 ```
 
 #### B. Cập nhật KÈM CÀI THƯ VIỆN *(khi có sửa `package.json` / `pnpm-lock.yaml`)*
 ```bash
-cd /var/www/hoai-thuong-wedding && git pull && pnpm install --frozen-lockfile && pnpm build && pm2 restart hoai-thuong-wedding
+cd /var/www/hoai-thuong-wedding && git pull && pnpm install --frozen-lockfile && rm -rf .next && pnpm build && pm2 restart hoai-thuong-wedding
 ```
 
 #### C. Cập nhật KÈM MIGRATION DATABASE *(khi có file mới trong thư mục `drizzle/`)*
 ```bash
-cd /var/www/hoai-thuong-wedding && git pull && pnpm install --frozen-lockfile && pnpm db:migrate && pnpm build && pm2 restart hoai-thuong-wedding
+cd /var/www/hoai-thuong-wedding && git pull && pnpm install --frozen-lockfile && pnpm db:migrate && rm -rf .next && pnpm build && pm2 restart hoai-thuong-wedding
 ```
 
 ---
