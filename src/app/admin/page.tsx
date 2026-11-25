@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -37,8 +38,8 @@ async function AdminOverviewContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-[#3E4A42]">Bảng điều khiển Quản trị</h1>
-        <p className="mt-1 text-sm text-[#4A4242]">
+        <h1 className="text-2xl font-extrabold text-ink">Bảng điều khiển Quản trị</h1>
+        <p className="mt-1 text-sm text-ink-secondary">
           Chào {auth.user.zaloName || "Admin"} — quản lý nhân sự, xác minh danh tính và show bưng
           quả.
         </p>
@@ -52,32 +53,32 @@ async function AdminOverviewContent() {
             </CardDescription>
             <CardTitle className="text-3xl">{staffStats?.total ?? 0}</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-[#4A4242]">
+          <CardContent className="text-xs text-ink-secondary">
             Hoạt động: <strong>{staffStats?.active ?? 0}</strong> · Đã mời:{" "}
             <strong>{staffStats?.invited ?? 0}</strong>
           </CardContent>
         </Card>
 
-        <Card className="border-[#E8B4B8] bg-[#F4D6D6]/20">
+        <Card className="border-blush-strong bg-blush/20">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <UserCheck className="h-4 w-4" /> Chờ xác minh danh tính
             </CardDescription>
             <CardTitle className="text-3xl">{staffStats?.pending ?? 0}</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-[#4A4242]">
+          <CardContent className="text-xs text-ink-secondary">
             Nhân sự mới tự đăng nhập Zalo từ group chung.
           </CardContent>
         </Card>
 
-        <Card className="bg-[#EEF3E8]/60">
+        <Card className="bg-sage-soft/60">
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4" /> Show đang mở tuyển
             </CardDescription>
             <CardTitle className="text-3xl">{showStats?.open ?? 0}</CardTitle>
           </CardHeader>
-          <CardContent className="text-xs text-[#4A4242]">
+          <CardContent className="text-xs text-ink-secondary">
             Tổng show trong hệ thống: <strong>{showStats?.total ?? 0}</strong>
           </CardContent>
         </Card>
@@ -86,19 +87,19 @@ async function AdminOverviewContent() {
       <div className="flex flex-wrap gap-3">
         <Link
           href="/admin/shows/new"
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#E8B4B8] px-5 text-sm font-semibold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#F4D6D6]"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-blush-strong px-5 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-blush"
         >
           + Tạo Show bưng quả mới
         </Link>
         <Link
           href="/admin/shows"
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#C8D5B9] px-5 text-sm font-semibold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#B7C9B5]"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-sage px-5 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-sage-muted"
         >
           Lịch Show theo ngày →
         </Link>
         <Link
           href="/admin/staff"
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-[#B7C9B5] bg-white px-5 text-sm font-semibold text-[#3E4A42] transition-colors hover:bg-[#EEF3E8]"
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-line-strong bg-surface px-5 text-sm font-semibold text-ink transition-colors hover:bg-sage-soft"
         >
           Quản lý Nhân sự
         </Link>
@@ -110,13 +111,7 @@ async function AdminOverviewContent() {
 export default function AdminHomePage() {
   return (
     <AdminShell>
-      <Suspense
-        fallback={
-          <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-            Đang tải tổng quan...
-          </div>
-        }
-      >
+      <Suspense fallback={<ListSkeleton rows={2} />}>
         <AdminOverviewContent />
       </Suspense>
     </AdminShell>

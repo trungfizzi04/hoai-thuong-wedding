@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckCircle2, Clock } from "lucide-react";
@@ -39,10 +40,10 @@ async function StaffHomeContent() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#C8D5B9] bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-surface p-4 shadow-sm">
         <div>
-          <p className="text-base font-bold text-[#3E4A42]">Chào {profile.fullName}!</p>
-          <p className="text-xs text-[#4A4242]">
+          <p className="text-base font-bold text-ink">Chào {profile.fullName}!</p>
+          <p className="text-xs text-ink-secondary">
             {profile.gender === "MALE" ? "Nam" : "Nữ"} · {profile.heightCm} cm · Áo dài size{" "}
             <strong>{profile.aoDaiSize}</strong> ·{" "}
             <Link href="/staff/profile" className="underline">
@@ -70,13 +71,7 @@ async function StaffHomeContent() {
 
 export default function StaffHomePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-          Đang tải bảng tin show...
-        </div>
-      }
-    >
+    <Suspense fallback={<ListSkeleton rows={2} />}>
       <StaffHomeContent />
     </Suspense>
   );

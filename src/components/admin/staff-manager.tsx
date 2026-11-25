@@ -9,8 +9,8 @@ import {
   Lock,
   Unlock,
   UserPlus,
-  X,
 } from "lucide-react";
+import { PhotoLightbox } from "@/components/staff/photo-lightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,7 +58,7 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
   const [inviteBox, setInviteBox] = useState<{ url: string; message: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
-  const [lightbox, setLightbox] = useState<{ staffId: string; index: number } | null>(null);
+  const [lightbox, setLightbox] = useState<{ staffId: string; index: number; count: number } | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filtered =
@@ -187,8 +187,8 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
             <div
               className={
                 notice.type === "ok"
-                  ? "rounded-xl border border-[#B7C9B5] bg-[#EEF3E8] p-3 text-xs text-[#3E4A42]"
-                  : "rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3 text-xs text-[#4A4242]"
+                  ? "rounded-xl border border-line-strong bg-sage-soft p-3 text-xs text-ink"
+                  : "rounded-xl border border-blush-strong bg-blush/60 p-3 text-xs text-ink-secondary"
               }
             >
               {notice.text}
@@ -196,9 +196,9 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
           ) : null}
 
           {inviteBox ? (
-            <div className="space-y-2 rounded-xl border border-[#B7C9B5] bg-[#EEF3E8] p-4 text-xs text-[#3E4A42]">
+            <div className="space-y-2 rounded-xl border border-line-strong bg-sage-soft p-4 text-xs text-ink">
               <p className="font-bold">Tin nhắn mời dán vào Zalo cá nhân:</p>
-              <pre className="whitespace-pre-wrap rounded-lg bg-white p-3 font-sans text-xs text-[#3E4A42]">
+              <pre className="whitespace-pre-wrap rounded-lg bg-surface p-3 font-sans text-xs text-ink">
                 {inviteBox.message}
               </pre>
               <div className="flex flex-wrap gap-2">
@@ -235,8 +235,8 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
             onClick={() => setFilter(tab.key)}
             className={
               filter === tab.key
-                ? "rounded-full bg-[#3E4A42] px-3.5 py-1.5 text-xs font-semibold text-white"
-                : "rounded-full border border-[#C8D5B9] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#3E4A42] hover:bg-[#EEF3E8]"
+                ? "rounded-full bg-ink px-3.5 py-1.5 text-xs font-semibold text-paper"
+                : "rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-semibold text-ink hover:bg-sage-soft"
             }
           >
             {tab.label}
@@ -248,7 +248,7 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <Card>
-            <CardContent className="p-6 text-center text-sm text-[#4A4242]">
+            <CardContent className="p-6 text-center text-sm text-ink-secondary">
               Không có nhân sự nào trong mục này.
             </CardContent>
           </Card>
@@ -263,10 +263,10 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
                       <img
                         src={staff.zaloAvatarUrl}
                         alt={staff.profile?.fullName || staff.zaloName || "Avatar"}
-                        className="h-11 w-11 rounded-full border border-[#C8D5B9] object-cover"
+                        className="h-11 w-11 rounded-full border border-line object-cover"
                       />
                     ) : (
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#C8D5B9] text-xs font-bold text-[#3E4A42]">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-sage text-xs font-bold text-ink">
                         {(staff.profile?.fullName || staff.zaloName || "NV")
                           .slice(0, 2)
                           .toUpperCase()}
@@ -275,7 +275,7 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
 
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-bold text-[#3E4A42]">
+                        <p className="text-sm font-bold text-ink">
                           {staff.profile?.fullName || staff.zaloName || "(Chưa điền tên)"}
                         </p>
                         {staff.status === "ACTIVE" ? (
@@ -288,12 +288,12 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
                           <Badge variant="danger">Đã khóa</Badge>
                         )}
                       </div>
-                      <p className="text-xs text-[#4A4242]">
+                      <p className="text-xs text-ink-secondary">
                         SĐT: <strong>{staff.profile?.contactPhone || staff.loginPhone || "—"}</strong>
                         {staff.zaloName ? ` · Zalo: ${staff.zaloName}` : ""}
                       </p>
                       {staff.profile ? (
-                        <p className="text-xs text-[#4A4242]">
+                        <p className="text-xs text-ink-secondary">
                           {staff.profile.gender === "MALE" ? "Nam" : "Nữ"} · Cao{" "}
                           <strong>{staff.profile.heightCm} cm</strong>
                           {staff.profile.weightKg ? ` · Nặng ${staff.profile.weightKg} kg` : ""} ·
@@ -301,7 +301,7 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
                           <strong>{staff.profile.reputationScore}</strong>
                         </p>
                       ) : (
-                        <p className="text-xs italic text-[#4A4242]/70">Chưa hoàn tất hồ sơ 6 trường</p>
+                        <p className="text-xs italic text-ink-secondary/70">Chưa hoàn tất hồ sơ 6 trường</p>
                       )}
                     </div>
                   </div>
@@ -359,13 +359,19 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
 
                 {/* Staff Personal Photos (up to 4) */}
                 {staff.profile && staff.profile.photoCount > 0 ? (
-                  <div className="flex flex-wrap gap-2 border-t border-[#C8D5B9]/40 pt-3">
+                  <div className="flex flex-wrap gap-2 border-t border-line/40 pt-3">
                     {Array.from({ length: staff.profile.photoCount }).map((_, idx) => (
                       <button
                         key={idx}
                         type="button"
-                        onClick={() => setLightbox({ staffId: staff.id, index: idx })}
-                        className="h-20 w-16 overflow-hidden rounded-xl border border-[#C8D5B9] bg-[#FAF9F5] transition-transform hover:scale-105"
+                        onClick={() =>
+                          setLightbox({
+                            staffId: staff.id,
+                            index: idx,
+                            count: staff.profile?.photoCount ?? 1,
+                          })
+                        }
+                        className="h-20 w-16 overflow-hidden rounded-xl border border-line bg-paper transition-transform hover:scale-105"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -385,27 +391,13 @@ export function StaffManager({ staffList }: { staffList: AdminStaffListItem[] })
 
       {/* Lightbox */}
       {lightbox ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <div className="relative max-h-[90vh] max-w-xl" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={() => setLightbox(null)}
-              aria-label="Đóng"
-              className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#3E4A42] shadow"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/api/photos/${lightbox.staffId}?index=${lightbox.index}&size=full`}
-              alt="Ảnh cá nhân nhân sự"
-              className="max-h-[85vh] w-auto rounded-2xl object-contain shadow-xl"
-            />
-          </div>
-        </div>
+        <PhotoLightbox
+          count={lightbox.count}
+          index={lightbox.index}
+          srcFor={(i) => `/api/photos/${lightbox.staffId}?index=${i}&size=full`}
+          onIndexChange={(next) => setLightbox((cur) => (cur ? { ...cur, index: next } : null))}
+          onClose={() => setLightbox(null)}
+        />
       ) : null}
     </div>
   );

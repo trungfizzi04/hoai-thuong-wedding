@@ -1,4 +1,7 @@
 import { Suspense } from "react";
+import { BrandMark } from "@/components/brand-mark";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { and, eq, gt, isNull } from "drizzle-orm";
 import Link from "next/link";
 import { InviteActivateForm } from "@/components/auth/invite-activate-form";
@@ -33,12 +36,12 @@ async function InviteVerifier({ params }: { params: Promise<{ token: string }> }
   if (!row) {
     return (
       <div className="space-y-4 text-center">
-        <div className="rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/50 p-4 text-sm text-[#4A4242]">
+        <div className="rounded-xl border border-blush-strong bg-blush/50 p-4 text-sm text-ink-secondary">
           Link kích hoạt này không hợp lệ, đã được sử dụng hoặc đã hết hạn sau 72 giờ.
         </div>
-        <p className="text-xs text-[#4A4242]">
+        <p className="text-xs text-ink-secondary">
           Bạn vui lòng nhắn trực tiếp Admin trên Zalo để nhận link mới hoặc{" "}
-          <Link href="/login" className="font-semibold text-[#3E4A42] underline">
+          <Link href="/login" className="font-semibold text-ink underline">
             đăng nhập trực tiếp
           </Link>
           .
@@ -58,31 +61,26 @@ async function InviteVerifier({ params }: { params: Promise<{ token: string }> }
 
 export default function InvitePage({ params }: { params: Promise<{ token: string }> }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#FAF9F5] px-4 py-10">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-paper px-4 py-10">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#C8D5B9] text-lg font-bold text-[#3E4A42]">
-            HT
-          </div>
-          <h1 className="text-2xl font-extrabold text-[#3E4A42]">Kích hoạt tài khoản</h1>
-          <p className="mt-1 text-sm text-[#4A4242]">Link mời riêng dùng 1 lần từ Hoài Thương Wedding</p>
+        <div className="flex flex-col items-center text-center">
+          <BrandMark className="mb-3 h-12 w-12 text-xl" />
+          <h1 className="font-serif text-3xl font-semibold text-ink">Kích hoạt tài khoản</h1>
+          <p className="mt-1 text-sm text-ink-secondary">Link mời riêng dùng 1 lần từ Hoài Thương Wedding</p>
         </div>
 
         <Card>
           <CardHeader>
             <CardTitle>Xác nhận danh tính</CardTitle>
             <CardDescription>
-              Liên kết Zalo hoặc đặt mật khẩu để kích hoạt tài khoản nhân sự chính thức.
+              Liên kết Zalo để kích hoạt tài khoản nhân sự chính thức.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Suspense
-              fallback={
-                <div className="py-6 text-center text-sm text-[#4A4242]">
-                  Đang kiểm tra mã kích hoạt...
-                </div>
-              }
-            >
+            <Suspense fallback={<ListSkeleton rows={1} />}>
               <InviteVerifier params={params} />
             </Suspense>
           </CardContent>

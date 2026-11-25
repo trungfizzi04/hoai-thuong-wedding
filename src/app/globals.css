@@ -1,31 +1,112 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Editorial Wedding design tokens — Light is the default, Dark is opt-in via .dark on <html> */
 :root {
-  --background: #faf9f5;
-  --foreground: #3e4a42;
+  color-scheme: light;
+  --paper: #faf8f4;
+  --surface: #ffffff;
+  --ink: #3e4a42;
+  --ink-secondary: #4a4242;
+  --line: #dfe5d6;
+  --line-strong: #b7c9b5;
   --sage: #c8d5b9;
   --sage-muted: #b7c9b5;
   --sage-soft: #eef3e8;
   --blush: #f4d6d6;
   --blush-strong: #e8b4b8;
-  --ink-secondary: #4a4242;
+  --danger: #d9777f;
+}
+
+.dark {
+  color-scheme: dark;
+  --paper: #141916;
+  --surface: #1c231f;
+  --ink: #f3efe7;
+  --ink-secondary: #b5beb6;
+  --line: #2e3a33;
+  --line-strong: #3f5046;
+  --sage: #34453a;
+  --sage-muted: #44594b;
+  --sage-soft: #242d28;
+  --blush: #352326;
+  --blush-strong: #6b4046;
+  --danger: #b8555d;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-sage: var(--sage);
   --color-sage-muted: var(--sage-muted);
   --color-sage-soft: var(--sage-soft);
   --color-blush: var(--blush);
   --color-blush-strong: var(--blush-strong);
-  --color-ink-secondary: var(--ink-secondary);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-be-vietnam), system-ui, -apple-system, sans-serif;
+  --font-serif: var(--font-cormorant), "Times New Roman", serif;
+  --animate-fade-up: fade-up 0.35s ease-out both;
+  --animate-modal-in: modal-in 0.18s ease-out both;
+  --animate-toast-in: toast-in 0.25s ease-out both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-be-vietnam), system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1,
+h2 {
+  font-family: var(--font-cormorant), "Times New Roman", serif;
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

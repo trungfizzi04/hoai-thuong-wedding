@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ShowForm } from "@/components/admin/show-form";
@@ -18,19 +19,13 @@ export default function NewShowPage() {
     <AdminShell>
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#3E4A42]">Tạo Show Bưng Quả Mới</h1>
-          <p className="mt-1 text-sm text-[#4A4242]">
+          <h1 className="text-2xl font-extrabold text-ink">Tạo Show Bưng Quả Mới</h1>
+          <p className="mt-1 text-sm text-ink-secondary">
             Sau khi tạo, bạn có thể bấm Copy tin tuyển kèm link đăng ký 1 chạm để gửi vào group
             Zalo.
           </p>
         </div>
-        <Suspense
-          fallback={
-            <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-              Đang tải biểu mẫu...
-            </div>
-          }
-        >
+        <Suspense fallback={<ListSkeleton rows={2} />}>
           <NewShowGuard />
         </Suspense>
       </div>

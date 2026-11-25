@@ -10,12 +10,11 @@ import {
 export async function GET(request: NextRequest) {
   const origin = resolveAppOrigin(request);
   const appId = process.env.ZALO_APP_ID?.trim();
-  const mode = request.nextUrl.searchParams.get("mode");
   const invite = request.nextUrl.searchParams.get("invite")?.trim() || null;
   const nextPath = request.nextUrl.searchParams.get("next")?.trim() || null;
 
   if (!appId) {
-    const errorTarget = new URL(mode === "spike" ? "/zalo-spike" : "/login", origin);
+    const errorTarget = new URL("/login", origin);
     errorTarget.searchParams.set("error", "MISSING_ZALO_APP_ID");
     errorTarget.searchParams.set(
       "error_description",
@@ -49,11 +48,7 @@ export async function GET(request: NextRequest) {
   response.cookies.set("zalo_code_verifier", codeVerifier, baseCookie);
   response.cookies.set("zalo_state", state, baseCookie);
 
-  if (mode === "spike") {
-    response.cookies.set("zalo_auth_mode", "spike", baseCookie);
-  } else {
-    response.cookies.delete("zalo_auth_mode");
-  }
+  response.cookies.delete("zalo_auth_mode");
 
   if (invite) {
     response.cookies.set("zalo_invite_token", invite, baseCookie);

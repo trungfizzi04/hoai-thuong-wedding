@@ -3,15 +3,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B7C9B5] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-line-strong focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        primary: "bg-[#E8B4B8] text-[#3E4A42] shadow-sm hover:bg-[#F4D6D6]",
-        secondary: "bg-[#C8D5B9] text-[#3E4A42] shadow-sm hover:bg-[#B7C9B5]",
-        outline: "border border-[#B7C9B5] bg-white text-[#3E4A42] hover:bg-[#EEF3E8]",
-        ghost: "text-[#3E4A42] hover:bg-[#EEF3E8]",
-        destructive: "bg-[#D9777F] text-white shadow-sm hover:bg-[#c8666e]",
+        primary: "bg-blush-strong text-ink hover:bg-blush",
+        secondary: "bg-sage text-ink hover:bg-sage-muted",
+        outline: "border border-line-strong bg-surface text-ink hover:bg-sage-soft",
+        ghost: "text-ink hover:bg-sage-soft",
+        destructive: "bg-danger text-white hover:bg-danger/85",
       },
       size: {
         sm: "h-9 px-3 text-xs",

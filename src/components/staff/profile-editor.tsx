@@ -2,20 +2,15 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Download,
-  Expand,
-  ImagePlus,
-  RefreshCw,
-  ShieldAlert,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Download, ImagePlus, RefreshCw, ShieldAlert, Star, Trash2 } from "lucide-react";
+import { PhotoLightbox } from "@/components/staff/photo-lightbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useConfirm } from "@/components/ui/modal";
+import { useToast } from "@/components/ui/toast";
 import { compressImageFile } from "@/lib/client-image";
 import { AO_DAI_SIZES } from "@/lib/validations/auth";
 import { anonymizeMyAccountAction, updateMyProfileAction } from "@/server/actions/staff";
@@ -39,6 +34,30 @@ interface ProfileEditorProps {
 
 const MAX_PHOTOS = 4;
 
+type UploadStatus = "compressing" | "queued" | "uploading" | "done" | "error";
+
+interface UploadItem {
+  id: number;
+  name: string;
+  status: UploadStatus;
+  error?: string;
+}
+
+const STATUS_LABEL: Record<UploadStatus, string> = {
+  compressing: "Đang nén...",
+  queued: "Chờ tải lên",
+  uploading: "Đang tải lên...",
+  done: "Hoàn tất",
+  error: "Lỗi",
+};
+
+interface PhotoApiResponse {
+  ok?: boolean;
+  error?: string;
+  message?: string;
+  photoCount?: number;
+}
+
 export function ProfileEditor({
   userId,
   userRole,
@@ -48,6 +67,9 @@ export function ProfileEditor({
   initialProfile,
 }: ProfileEditorProps) {
   const router = useRouter();
+  const toast = useToast();
+  const confirmDialog = useConfirm();
+
   const [fullName, setFullName] = useState(initialProfile.fullName);
   const [contactPhone, setContactPhone] = useState(initialProfile.contactPhone);
   const [gender, setGender] = useState<"MALE" | "FEMALE">(initialProfile.gender);
@@ -55,19 +77,14 @@ export function ProfileEditor({
   const [weightKg, setWeightKg] = useState(
     initialProfile.weightKg !== null ? String(initialProfile.weightKg) : "",
   );
-  const [aoDaiSize, setAoDaiSize] = useState<(typeof AO_DAI_SIZES)[number]>(
-    initialProfile.aoDaiSize,
-  );
+  const [aoDaiSize, setAoDaiSize] = useState<(typeof AO_DAI_SIZES)[number]>(initialProfile.aoDaiSize);
 
   const [photoCount, setPhotoCount] = useState(initialProfile.photoCount);
   const [photoVersion, setPhotoVersion] = useState(1);
   const [photoBusy, setPhotoBusy] = useState(false);
-  const [photoNotice, setPhotoNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const [profileNotice, setProfileNotice] = useState<{ type: "ok" | "err"; text: string } | null>(
-    null,
-  );
   const [isSaving, startSaving] = useTransition();
   const [isDeletingAccount, startDeletingAccount] = useTransition();
 
@@ -77,7 +94,6 @@ export function ProfileEditor({
 
   function handleSaveProfile(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setProfileNotice(null);
 
     startSaving(async () => {
       const result = await updateMyProfileAction({
@@ -90,83 +106,135 @@ export function ProfileEditor({
       });
 
       if (!result.ok) {
-        setProfileNotice({ type: "err", text: result.error || "Cập nhật thất bại." });
+        toast.error(result.error || "Cập nhật thất bại.");
         return;
       }
 
-      setProfileNotice({ type: "ok", text: result.message || "Đã lưu thay đổi." });
+      toast.success(result.message || "Đã lưu thay đổi.");
       router.refresh();
     });
   }
 
-  async function uploadPhoto(file: File, replaceIndex: number | null) {
-    setPhotoNotice(null);
+  function patchUpload(id: number, status: UploadStatus, error?: string) {
+    setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, status, error } : u)));
+  }
+
+  /** Compress in parallel (CPU-bound, in browser), upload sequentially (avoids DB write races on photoItems). */
+  async function uploadFiles(files: File[], replaceIndex: number | null) {
+    const slots = replaceIndex !== null ? 1 : MAX_PHOTOS - photoCount;
+    const picked = files.slice(0, slots);
+    if (picked.length === 0) {
+      toast.info("Hồ sơ đã đủ 4 ảnh. Hãy dùng nút Thay hoặc xóa bớt ảnh.");
+      return;
+    }
+    if (files.length > picked.length) {
+      toast.info(`Chỉ còn ${slots} ô trống nên đã bỏ bớt ${files.length - picked.length} ảnh.`);
+    }
+
+    setPhotoBusy(true);
+    const baseId = Date.now();
+    const items: UploadItem[] = picked.map((f, i) => ({
+      id: baseId + i,
+      name: f.name,
+      status: "compressing",
+    }));
+    setUploads(items);
+
+    const compressed = await Promise.all(
+      picked.map(async (file, i) => {
+        try {
+          const out = await compressImageFile(file);
+          patchUpload(items[i].id, "queued");
+          return out;
+        } catch (err) {
+          patchUpload(items[i].id, "error", err instanceof Error ? err.message : "Lỗi xử lý ảnh.");
+          return null;
+        }
+      }),
+    );
+
+    let okCount = 0;
+    for (let i = 0; i < compressed.length; i += 1) {
+      const file = compressed[i];
+      if (!file) continue;
+      patchUpload(items[i].id, "uploading");
+      try {
+        const fd = new FormData();
+        fd.set("photo", file);
+        if (replaceIndex !== null) fd.set("replaceIndex", String(replaceIndex));
+
+        const res = await fetch("/api/staff/photos", { method: "POST", body: fd });
+        const data = (await res.json()) as PhotoApiResponse;
+
+        if (!res.ok || !data.ok) {
+          patchUpload(items[i].id, "error", data.error || "Không thể tải ảnh lên.");
+          continue;
+        }
+        if (typeof data.photoCount === "number") setPhotoCount(data.photoCount);
+        patchUpload(items[i].id, "done");
+        okCount += 1;
+      } catch {
+        patchUpload(items[i].id, "error", "Lỗi kết nối mạng.");
+      }
+    }
+
+    setPhotoVersion((v) => v + 1);
+    setPhotoBusy(false);
+    if (okCount > 0) {
+      toast.success(`Đã cập nhật ${okCount} ảnh.`);
+      router.refresh();
+      window.setTimeout(() => setUploads((prev) => prev.filter((u) => u.status === "error")), 2500);
+    } else {
+      toast.error("Không có ảnh nào được tải lên.");
+    }
+  }
+
+  async function handleDeletePhoto(index: number) {
+    const { confirmed } = await confirmDialog({
+      title: "Xóa ảnh này?",
+      description: "Ảnh sẽ bị xóa khỏi hồ sơ và khỏi hệ thống lưu trữ.",
+      confirmLabel: "Xóa ảnh",
+      destructive: true,
+    });
+    if (!confirmed) return;
+
     setPhotoBusy(true);
     try {
-      const compressed = await compressImageFile(file);
-      const fd = new FormData();
-      fd.set("photo", compressed);
-      if (replaceIndex !== null) {
-        fd.set("replaceIndex", String(replaceIndex));
-      }
-
-      const res = await fetch("/api/staff/photos", {
-        method: "POST",
-        body: fd,
-      });
-      const data = (await res.json()) as {
-        ok?: boolean;
-        error?: string;
-        message?: string;
-        photoCount?: number;
-      };
-
+      const res = await fetch(`/api/staff/photos?index=${index}`, { method: "DELETE" });
+      const data = (await res.json()) as PhotoApiResponse;
       if (!res.ok || !data.ok) {
-        setPhotoNotice({ type: "err", text: data.error || "Không thể tải ảnh lên." });
+        toast.error(data.error || "Không thể xóa ảnh.");
         return;
       }
-
-      if (typeof data.photoCount === "number") {
-        setPhotoCount(data.photoCount);
-      }
+      if (typeof data.photoCount === "number") setPhotoCount(data.photoCount);
       setPhotoVersion((v) => v + 1);
-      setPhotoNotice({ type: "ok", text: data.message || "Đã cập nhật ảnh." });
+      toast.success(data.message || "Đã xóa ảnh.");
       router.refresh();
-    } catch (err) {
-      setPhotoNotice({
-        type: "err",
-        text: err instanceof Error ? err.message : "Lỗi xử lý ảnh.",
-      });
+    } catch {
+      toast.error("Lỗi kết nối khi xóa ảnh.");
     } finally {
       setPhotoBusy(false);
     }
   }
 
-  async function handleDeletePhoto(index: number) {
-    setPhotoNotice(null);
+  async function handleSetPrimary(index: number) {
     setPhotoBusy(true);
     try {
-      const res = await fetch(`/api/staff/photos?index=${index}`, {
-        method: "DELETE",
+      const res = await fetch("/api/staff/photos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ primaryIndex: index }),
       });
-      const data = (await res.json()) as {
-        ok?: boolean;
-        error?: string;
-        message?: string;
-        photoCount?: number;
-      };
+      const data = (await res.json()) as PhotoApiResponse;
       if (!res.ok || !data.ok) {
-        setPhotoNotice({ type: "err", text: data.error || "Không thể xóa ảnh." });
+        toast.error(data.error || "Không thể đặt ảnh chính.");
         return;
       }
-      if (typeof data.photoCount === "number") {
-        setPhotoCount(data.photoCount);
-      }
       setPhotoVersion((v) => v + 1);
-      setPhotoNotice({ type: "ok", text: data.message || "Đã xóa ảnh." });
+      toast.success(data.message || "Đã đặt làm ảnh chính.");
       router.refresh();
     } catch {
-      setPhotoNotice({ type: "err", text: "Lỗi kết nối khi xóa ảnh." });
+      toast.error("Lỗi kết nối mạng.");
     } finally {
       setPhotoBusy(false);
     }
@@ -177,16 +245,23 @@ export function ProfileEditor({
     replaceFileInputRef.current?.click();
   }
 
-  function handleAnonymizeAccount() {
-    const confirmed = window.confirm(
-      "Bạn chắc chắn muốn xóa/ẩn danh tài khoản? Toàn bộ ảnh cá nhân trên Cloudinary sẽ bị xóa vĩnh viễn và bạn sẽ bị đăng xuất ngay lập tức.",
-    );
+  async function handleAnonymizeAccount() {
+    const { confirmed } = await confirmDialog({
+      title: "Xóa & ẩn danh tài khoản?",
+      description:
+        "Toàn bộ ảnh cá nhân sẽ bị xóa vĩnh viễn và bạn sẽ bị đăng xuất ngay lập tức. Không thể hoàn tác.",
+      confirmLabel: "Xóa tài khoản",
+      destructive: true,
+    });
     if (!confirmed) return;
 
     startDeletingAccount(async () => {
       await anonymizeMyAccountAction();
     });
   }
+
+  const photoSrc = (index: number, size: "thumb" | "full") =>
+    `/api/photos/${userId}?index=${index}&size=${size}&v=${photoVersion}`;
 
   return (
     <div className="space-y-6">
@@ -199,18 +274,18 @@ export function ProfileEditor({
               <img
                 src={zaloAvatarUrl}
                 alt={zaloName || fullName}
-                className="h-12 w-12 rounded-full border border-[#C8D5B9] object-cover"
+                className="h-12 w-12 rounded-full border border-line object-cover"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C8D5B9] text-sm font-bold text-[#3E4A42]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sage text-sm font-bold text-ink">
                 {fullName.slice(0, 2).toUpperCase()}
               </div>
             )}
             <div>
-              <p className="text-sm font-bold text-[#3E4A42]">{fullName}</p>
-              <p className="text-xs text-[#4A4242]">
-                Tài khoản Zalo: {zaloName || "Chưa liên kết"} · Avatar Zalo tách riêng với 4 ảnh
-                hồ sơ bên dưới
+              <p className="text-sm font-bold text-ink">{fullName}</p>
+              <p className="text-xs text-ink-secondary">
+                Tài khoản Zalo: {zaloName || "Chưa liên kết"} · Avatar Zalo tách riêng với 4 ảnh hồ sơ
+                bên dưới
               </p>
             </div>
           </div>
@@ -223,76 +298,76 @@ export function ProfileEditor({
       {/* Personal Photo Gallery (Max 4 photos, separate from Avatar) */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <CardTitle>Ảnh cá nhân ({photoCount}/{MAX_PHOTOS})</CardTitle>
-              <CardDescription className="mt-1">
-                Tối đa {MAX_PHOTOS} ảnh chân dung / toàn thân (không phải ảnh avatar). Khi thay
-                ảnh mới, ảnh cũ sẽ tự động xóa khỏi Cloudinary và hệ thống tự chống trùng ảnh.
-              </CardDescription>
-            </div>
-          </div>
+          <CardTitle>
+            Ảnh cá nhân ({photoCount}/{MAX_PHOTOS})
+          </CardTitle>
+          <CardDescription>
+            Chọn cùng lúc nhiều ảnh chân dung / toàn thân. Ảnh đầu tiên là <strong>ảnh chính</strong>{" "}
+            hiện đầu tiên cho Admin duyệt. Hệ thống tự nén và chống trùng ảnh.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {photoNotice ? (
-            <div
-              className={
-                photoNotice.type === "ok"
-                  ? "rounded-xl border border-[#B7C9B5] bg-[#EEF3E8] p-3 text-xs text-[#3E4A42]"
-                  : "rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3 text-xs text-[#4A4242]"
-              }
-            >
-              {photoNotice.text}
-            </div>
-          ) : null}
-
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {Array.from({ length: photoCount }).map((_, index) => (
               <div
                 key={`${index}-${photoVersion}`}
-                className="group relative overflow-hidden rounded-2xl border border-[#C8D5B9] bg-[#FAF9F5]"
+                className="group relative overflow-hidden rounded-xl border border-line bg-paper"
               >
                 <button
                   type="button"
                   onClick={() => setLightboxIndex(index)}
-                  className="block aspect-[3/4] w-full overflow-hidden"
+                  className="relative block aspect-[3/4] w-full overflow-hidden"
                   title="Bấm xem ảnh rõ nét"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={`/api/photos/${userId}?index=${index}&size=thumb&v=${photoVersion}`}
+                    src={photoSrc(index, "thumb")}
                     alt={`Ảnh cá nhân ${index + 1}`}
                     className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
+                  {index === 0 ? (
+                    <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-md bg-ink px-2 py-0.5 text-[11px] font-medium text-paper">
+                      <Star className="h-3 w-3 fill-current" />
+                      Ảnh chính
+                    </span>
+                  ) : null}
                 </button>
-                <div className="flex items-center justify-between gap-1 border-t border-[#C8D5B9]/60 bg-white px-2 py-1.5">
-                  <button
-                    type="button"
-                    disabled={photoBusy}
-                    onClick={() => triggerReplace(index)}
-                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-[#3E4A42] hover:bg-[#EEF3E8] disabled:opacity-50"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    Thay
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLightboxIndex(index)}
-                    aria-label="Phóng to"
-                    className="rounded-lg p-1 text-[#4A4242] hover:bg-[#EEF3E8]"
-                  >
-                    <Expand className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    disabled={photoBusy || photoCount <= 1}
-                    onClick={() => handleDeletePhoto(index)}
-                    aria-label="Xóa ảnh"
-                    title={photoCount <= 1 ? "Cần giữ tối thiểu 1 ảnh" : "Xóa ảnh này"}
-                    className="rounded-lg p-1 text-rose-600 hover:bg-rose-50 disabled:opacity-30"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                <div className="flex items-center justify-between gap-1 border-t border-line bg-surface px-1.5 py-1">
+                  {index > 0 ? (
+                    <button
+                      type="button"
+                      disabled={photoBusy}
+                      onClick={() => void handleSetPrimary(index)}
+                      title="Đặt làm ảnh chính"
+                      className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-ink hover:bg-sage-soft disabled:opacity-50"
+                    >
+                      <Star className="h-3.5 w-3.5" />
+                      Chính
+                    </button>
+                  ) : (
+                    <span className="px-2 text-[11px] text-ink-secondary">Đang là chính</span>
+                  )}
+                  <div className="flex items-center">
+                    <button
+                      type="button"
+                      disabled={photoBusy}
+                      onClick={() => triggerReplace(index)}
+                      aria-label="Thay ảnh"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-ink hover:bg-sage-soft disabled:opacity-50"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={photoBusy || photoCount <= 1}
+                      onClick={() => void handleDeletePhoto(index)}
+                      aria-label="Xóa ảnh"
+                      title={photoCount <= 1 ? "Cần giữ tối thiểu 1 ảnh" : "Xóa ảnh này"}
+                      className="flex h-9 w-9 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 disabled:opacity-30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -302,26 +377,48 @@ export function ProfileEditor({
                 type="button"
                 disabled={photoBusy}
                 onClick={() => addFileInputRef.current?.click()}
-                className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#B7C9B5] bg-[#EEF3E8]/50 p-3 text-center text-xs font-semibold text-[#3E4A42] transition-colors hover:bg-[#EEF3E8] disabled:opacity-50"
+                className="flex aspect-[3/4] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-sage-soft/50 p-3 text-center text-xs font-semibold text-ink transition-colors hover:bg-sage-soft disabled:opacity-50"
               >
                 <ImagePlus className="h-6 w-6" />
                 <span>{photoBusy ? "Đang tải..." : "Thêm ảnh"}</span>
-                <span className="text-[11px] font-normal text-[#4A4242]">
-                  Còn {MAX_PHOTOS - photoCount} ô
+                <span className="text-[11px] font-normal text-ink-secondary">
+                  Chọn 1–{MAX_PHOTOS - photoCount} ảnh cùng lúc
                 </span>
               </button>
             ) : null}
           </div>
 
+          {uploads.length > 0 ? (
+            <ul className="space-y-1.5 rounded-xl border border-line bg-paper p-3 text-xs">
+              {uploads.map((u) => (
+                <li key={u.id} className="flex items-center justify-between gap-3">
+                  <span className="truncate">{u.name}</span>
+                  <span
+                    className={
+                      u.status === "error"
+                        ? "shrink-0 text-rose-700 dark:text-rose-300"
+                        : u.status === "done"
+                          ? "shrink-0 font-semibold text-ink"
+                          : "shrink-0 text-ink-secondary"
+                    }
+                  >
+                    {u.status === "error" ? (u.error ?? STATUS_LABEL.error) : STATUS_LABEL[u.status]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
           <input
             ref={addFileInputRef}
             type="file"
+            multiple
             accept="image/jpeg,image/png,image/webp"
             className="hidden"
             onChange={(e) => {
-              const f = e.target.files?.[0];
+              const files = Array.from(e.target.files ?? []);
               e.target.value = "";
-              if (f) void uploadPhoto(f, null);
+              if (files.length > 0) void uploadFiles(files, null);
             }}
           />
           <input
@@ -333,7 +430,7 @@ export function ProfileEditor({
               const f = e.target.files?.[0];
               const idx = replaceIndexRef.current;
               e.target.value = "";
-              if (f && idx !== null) void uploadPhoto(f, idx);
+              if (f && idx !== null) void uploadFiles([f], idx);
             }}
           />
         </CardContent>
@@ -349,27 +446,10 @@ export function ProfileEditor({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveProfile} className="space-y-4">
-            {profileNotice ? (
-              <div
-                className={
-                  profileNotice.type === "ok"
-                    ? "rounded-xl border border-[#B7C9B5] bg-[#EEF3E8] p-3 text-xs text-[#3E4A42]"
-                    : "rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3 text-xs text-[#4A4242]"
-                }
-              >
-                {profileNotice.text}
-              </div>
-            ) : null}
-
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="p-fullName">Họ và tên</Label>
-                <Input
-                  id="p-fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                />
+                <Input id="p-fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
               </div>
 
               <div className="space-y-1.5">
@@ -392,7 +472,7 @@ export function ProfileEditor({
                   id="p-gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value as "MALE" | "FEMALE")}
-                  className="flex h-11 w-full rounded-xl border border-[#C8D5B9] bg-white px-3 text-sm text-[#3E4A42]"
+                  className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
                 >
                   <option value="FEMALE">Nữ</option>
                   <option value="MALE">Nam</option>
@@ -431,7 +511,7 @@ export function ProfileEditor({
                   id="p-size"
                   value={aoDaiSize}
                   onChange={(e) => setAoDaiSize(e.target.value as (typeof AO_DAI_SIZES)[number])}
-                  className="flex h-11 w-full rounded-xl border border-[#C8D5B9] bg-white px-3 text-sm text-[#3E4A42]"
+                  className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink"
                 >
                   {AO_DAI_SIZES.map((s) => (
                     <option key={s} value={s}>
@@ -452,19 +532,19 @@ export function ProfileEditor({
       {/* Personal Data Rights per Decree 356/2025/ND-CP */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ShieldAlert className="h-4 w-4 text-[#3E4A42]" />
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ShieldAlert className="h-4 w-4 text-ink" />
             Quyền dữ liệu cá nhân (Nghị định 356/2025/NĐ-CP)
           </CardTitle>
           <CardDescription>
-            Bạn có toàn quyền tải bản sao dữ liệu cá nhân hoặc yêu cầu xóa/ẩn danh tài khoản cùng
-            toàn bộ ảnh đã tải lên.
+            Bạn có toàn quyền tải bản sao dữ liệu cá nhân hoặc yêu cầu xóa/ẩn danh tài khoản cùng toàn bộ
+            ảnh đã tải lên.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           <a
             href="/api/me/export"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-[#B7C9B5] bg-white px-4 text-xs font-semibold text-[#3E4A42] transition-colors hover:bg-[#EEF3E8]"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 text-xs font-semibold text-ink transition-colors hover:bg-sage-soft"
           >
             <Download className="h-4 w-4" />
             Xuất dữ liệu cá nhân (JSON)
@@ -475,7 +555,7 @@ export function ProfileEditor({
               variant="destructive"
               size="sm"
               disabled={isDeletingAccount}
-              onClick={handleAnonymizeAccount}
+              onClick={() => void handleAnonymizeAccount()}
             >
               {isDeletingAccount ? "Đang xóa..." : "Xóa & ẩn danh tài khoản"}
             </Button>
@@ -483,29 +563,14 @@ export function ProfileEditor({
         </CardContent>
       </Card>
 
-      {/* Full-resolution Lightbox */}
       {lightboxIndex !== null ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setLightboxIndex(null)}
-        >
-          <div className="relative max-h-[90vh] max-w-xl" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={() => setLightboxIndex(null)}
-              aria-label="Đóng"
-              className="absolute -right-2 -top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#3E4A42] shadow"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/api/photos/${userId}?index=${lightboxIndex}&size=full&v=${photoVersion}`}
-              alt={`Ảnh cá nhân ${lightboxIndex + 1}`}
-              className="max-h-[85vh] w-auto rounded-2xl object-contain shadow-xl"
-            />
-          </div>
-        </div>
+        <PhotoLightbox
+          count={photoCount}
+          index={Math.min(lightboxIndex, photoCount - 1)}
+          srcFor={(i) => photoSrc(i, "full")}
+          onIndexChange={setLightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
       ) : null}
     </div>
   );

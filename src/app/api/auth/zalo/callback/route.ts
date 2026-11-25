@@ -4,7 +4,6 @@ import {
   exchangeZaloCode,
   getZaloUserInfo,
   resolveAppOrigin,
-  type ZaloSpikeSession,
 } from "@/lib/zalo";
 import {
   createDbSession,
@@ -41,10 +40,9 @@ function redirectWithError(
 
 export async function GET(request: NextRequest) {
   const origin = resolveAppOrigin(request);
-  const isSpike = request.cookies.get("zalo_auth_mode")?.value === "spike";
   const inviteRawToken = request.cookies.get("zalo_invite_token")?.value ?? null;
   const nextPath = request.cookies.get("zalo_auth_next")?.value ?? null;
-  const fallbackErrorPath = isSpike ? "/zalo-spike" : "/login";
+  const fallbackErrorPath = "/login";
 
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
@@ -123,30 +121,6 @@ export async function GET(request: NextRequest) {
     }
 
     const isSecure = origin.startsWith("https://");
-
-    // Backward-compatible spike diagnostic mode
-    if (isSpike) {
-      const spikePayload: ZaloSpikeSession = {
-        id: profile.id,
-        name: profile.name ?? "(Không có tên)",
-        pictureUrl: profile.picture?.data?.url ?? null,
-        isSensitive: typeof profile.is_sensitive === "boolean" ? profile.is_sensitive : null,
-        rawProfile: profile,
-        authenticatedAt: new Date().toISOString(),
-      };
-      const spikeUrl = new URL("/zalo-spike", origin);
-      spikeUrl.searchParams.set("success", "1");
-      const response = NextResponse.redirect(spikeUrl);
-      response.cookies.set("zalo_spike_user", JSON.stringify(spikePayload), {
-        httpOnly: true,
-        secure: isSecure,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30,
-      });
-      clearTempOAuthCookies(response);
-      return response;
-    }
 
     const db = getDb();
     const zaloId = profile.id;

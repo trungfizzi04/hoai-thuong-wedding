@@ -36,7 +36,7 @@ export function PublicRegisterButton({
 
   if (showStatus !== "OPEN") {
     return (
-      <div className="rounded-xl border border-[#C8D5B9] bg-[#FAF9F5] p-4 text-center text-sm font-medium text-[#4A4242]">
+      <div className="rounded-xl border border-line bg-paper p-4 text-center text-sm font-medium text-ink-secondary">
         Show này hiện đã đủ người hoặc đã đóng tuyển.
       </div>
     );
@@ -47,11 +47,11 @@ export function PublicRegisterButton({
       <div className="space-y-2">
         <Link
           href={`/login?next=${encodeURIComponent(`/shows/${showId}`)}`}
-          className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#E8B4B8] px-6 text-sm font-bold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#F4D6D6]"
+          className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-6 text-sm font-bold text-ink shadow-sm transition-colors hover:bg-blush"
         >
           Đăng nhập Zalo để đăng ký 1 chạm →
         </Link>
-        <p className="text-center text-xs text-[#4A4242]/80">
+        <p className="text-center text-xs text-ink-secondary/80">
           Sau khi bấm Cho phép trên Zalo sẽ quay lại đúng show này.
         </p>
       </div>
@@ -60,7 +60,7 @@ export function PublicRegisterButton({
 
   if (!isStaff) {
     return (
-      <div className="rounded-xl bg-[#EEF3E8] p-3.5 text-center text-xs text-[#3E4A42]">
+      <div className="rounded-xl bg-sage-soft p-3.5 text-center text-xs text-ink">
         Bạn đang đăng nhập bằng tài khoản Quản trị viên.{" "}
         <Link href={`/admin/shows/${showId}/edit`} className="font-bold underline">
           Chỉnh sửa show này
@@ -73,7 +73,7 @@ export function PublicRegisterButton({
     return (
       <Link
         href="/onboarding"
-        className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-[#E8B4B8] px-6 text-sm font-bold text-[#3E4A42] shadow-sm hover:bg-[#F4D6D6]"
+        className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-blush-strong px-6 text-sm font-bold text-ink shadow-sm hover:bg-blush"
       >
         Hoàn tất hồ sơ 1 lần để đăng ký show →
       </Link>
@@ -82,7 +82,7 @@ export function PublicRegisterButton({
 
   if (existingStatus === "PENDING" || existingStatus === "APPROVED" || existingStatus === "WAITLIST") {
     return (
-      <div className="space-y-2 rounded-xl border border-[#B7C9B5] bg-[#EEF3E8] p-4 text-center text-sm text-[#3E4A42]">
+      <div className="space-y-2 rounded-xl border border-line-strong bg-sage-soft p-4 text-center text-sm text-ink">
         <p className="inline-flex items-center gap-1.5 font-bold">
           <CheckCircle2 className="h-4 w-4" />
           Bạn đã đăng ký show này (
@@ -108,7 +108,7 @@ export function PublicRegisterButton({
 
   if (genderMismatch) {
     return (
-      <div className="rounded-xl border border-[#C8D5B9] bg-[#FAF9F5] p-4 text-center text-sm text-[#4A4242]">
+      <div className="rounded-xl border border-line bg-paper p-4 text-center text-sm text-ink-secondary">
         Show này hiện chỉ tuyển đội hình {requiredMale > 0 ? "Nam" : "Nữ"} (không khớp giới tính hồ
         sơ của bạn).
       </div>
@@ -134,8 +134,8 @@ export function PublicRegisterButton({
         <div
           className={
             notice.type === "ok"
-              ? "rounded-xl border border-[#B7C9B5] bg-[#EEF3E8] p-3 text-xs text-[#3E4A42]"
-              : "rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3 text-xs text-[#4A4242]"
+              ? "rounded-xl border border-line-strong bg-sage-soft p-3 text-xs text-ink"
+              : "rounded-xl border border-blush-strong bg-blush/60 p-3 text-xs text-ink-secondary"
           }
         >
           {notice.text}

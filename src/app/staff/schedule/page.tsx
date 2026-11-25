@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
 import { StaffMySchedule, type StaffScheduleItem } from "@/components/staff/my-schedule";
 import { getCurrentUser } from "@/server/dal/auth";
@@ -42,18 +43,12 @@ export default function StaffSchedulePage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-extrabold text-[#3E4A42]">Lịch của tôi</h1>
-        <p className="text-xs text-[#4A4242]">
+        <h1 className="text-xl font-extrabold text-ink">Lịch của tôi</h1>
+        <p className="text-xs text-ink-secondary">
           Theo dõi trạng thái các show bạn đã đăng ký và vào group Zalo show khi được duyệt.
         </p>
       </div>
-      <Suspense
-        fallback={
-          <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-            Đang tải lịch của bạn...
-          </div>
-        }
-      >
+      <Suspense fallback={<ListSkeleton rows={2} />}>
         <ScheduleContent />
       </Suspense>
     </div>

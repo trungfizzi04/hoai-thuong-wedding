@@ -36,7 +36,7 @@ export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
       {error ? (
         <div
           role="alert"
-          className="rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3.5 text-sm text-[#4A4242]"
+          className="rounded-xl border border-blush-strong bg-blush/60 p-3.5 text-sm text-ink-secondary"
         >
           {error}
         </div>
@@ -45,7 +45,7 @@ export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
       <div className="space-y-1.5">
         <Label htmlFor="admin-username">Tên đăng nhập (Username)</Label>
         <div className="relative">
-          <User className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-[#4A4242]/60" />
+          <User className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-ink-secondary/60" />
           <Input
             id="admin-username"
             type="text"
@@ -62,7 +62,7 @@ export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
       <div className="space-y-1.5">
         <Label htmlFor="admin-password">Mật khẩu Quản trị</Label>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-[#4A4242]/60" />
+          <Lock className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-ink-secondary/60" />
           <Input
             id="admin-password"
             type="password"
@@ -83,7 +83,7 @@ export function AdminLoginForm({ nextPath }: { nextPath?: string }) {
       <div className="pt-2 text-center">
         <Link
           href="/login"
-          className="text-xs font-medium text-[#4A4242]/80 underline underline-offset-4 hover:text-[#3E4A42]"
+          className="text-xs font-medium text-ink-secondary/80 underline underline-offset-4 hover:text-ink"
         >
           ← Quay lại cổng đăng nhập Nhân sự (Zalo)
         </Link>

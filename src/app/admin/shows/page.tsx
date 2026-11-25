@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { ShowsCalendarList, type AdminShowItem } from "@/components/admin/shows-calendar-list";
@@ -40,19 +41,13 @@ export default function AdminShowsPage() {
     <AdminShell>
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#3E4A42]">Lịch Show theo Ngày</h1>
-          <p className="mt-1 text-sm text-[#4A4242]">
+          <h1 className="text-2xl font-extrabold text-ink">Lịch Show theo Ngày</h1>
+          <p className="mt-1 text-sm text-ink-secondary">
             Tạo show, quản lý nhiều đám cưới cùng ngày và copy tin tuyển show dán thẳng vào group
             Zalo.
           </p>
         </div>
-        <Suspense
-          fallback={
-            <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-              Đang tải danh sách show...
-            </div>
-          }
-        >
+        <Suspense fallback={<ListSkeleton rows={2} />}>
           <AdminShowsContent />
         </Suspense>
       </div>

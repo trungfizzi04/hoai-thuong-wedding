@@ -1,15 +1,20 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Be_Vietnam_Pro, Cormorant_Garamond } from "next/font/google";
+import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin", "vietnamese"],
+  weight: ["500", "600", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const beVietnam = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
@@ -35,19 +40,29 @@ export const metadata: Metadata = {
     : undefined,
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
+/** Runs before first paint: Light by default, Dark only when the user explicitly chose it. */
+const THEME_INIT_SCRIPT = `try{if(localStorage.getItem("htw-theme")==="dark"){document.documentElement.classList.add("dark")}}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="vi"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${cormorant.variable} ${beVietnam.variable} h-full antialiased`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {zaloVerifyCode ? (
           <meta property="zalo-platform-site-verification" content={zaloVerifyCode} />
         ) : null}
       </head>
-      <body className="min-h-full flex flex-col bg-[#FAF9F5] text-[#3E4A42]">
-        {children}
+      <body className="flex min-h-full flex-col bg-paper font-sans text-ink">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

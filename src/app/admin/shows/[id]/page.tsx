@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -73,17 +74,11 @@ export default function AdminShowDetailPage({ params }: { params: Promise<{ id: 
       <div className="space-y-4">
         <Link
           href="/admin/shows"
-          className="inline-block text-xs font-semibold text-[#3E4A42] underline underline-offset-4"
+          className="inline-block text-xs font-semibold text-ink underline underline-offset-4"
         >
           ← Quay lại Lịch Show theo ngày
         </Link>
-        <Suspense
-          fallback={
-            <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-              Đang tải danh sách ứng viên &amp; bảng size áo...
-            </div>
-          }
-        >
+        <Suspense fallback={<ListSkeleton rows={2} />}>
           <AdminShowDetailContent params={params} />
         </Suspense>
       </div>

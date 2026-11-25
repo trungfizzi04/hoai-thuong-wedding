@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { ListSkeleton } from "@/components/ui/skeleton";
 import { eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
@@ -52,18 +53,12 @@ export default function EditShowPage({ params }: { params: Promise<{ id: string 
     <AdminShell>
       <div className="space-y-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#3E4A42]">Chỉnh sửa Show</h1>
-          <p className="mt-1 text-sm text-[#4A4242]">
+          <h1 className="text-2xl font-extrabold text-ink">Chỉnh sửa Show</h1>
+          <p className="mt-1 text-sm text-ink-secondary">
             Hệ thống tự khóa dòng dữ liệu để bảo vệ số slot đã duyệt khi bạn chỉnh sửa.
           </p>
         </div>
-        <Suspense
-          fallback={
-            <div className="rounded-2xl border border-[#C8D5B9] bg-white p-6 text-sm text-[#4A4242]">
-              Đang tải thông tin show...
-            </div>
-          }
-        >
+        <Suspense fallback={<ListSkeleton rows={2} />}>
           <EditShowContent params={params} />
         </Suspense>
       </div>

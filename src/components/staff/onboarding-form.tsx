@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Upload } from "lucide-react";
+import { ImagePlus, Star, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast";
 import { compressImageFile } from "@/lib/client-image";
 import { AO_DAI_SIZES } from "@/lib/validations/auth";
 
@@ -14,39 +15,84 @@ interface OnboardingFormProps {
   defaultPhone: string;
 }
 
+interface PickedPhoto {
+  id: number;
+  file: File;
+  url: string;
+}
+
+const MAX_PHOTOS = 4;
+
 export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingFormProps) {
   const router = useRouter();
+  const toast = useToast();
   const [fullName, setFullName] = useState(defaultFullName);
   const [contactPhone, setContactPhone] = useState(defaultPhone);
   const [gender, setGender] = useState<"MALE" | "FEMALE">("FEMALE");
   const [heightCm, setHeightCm] = useState("162");
   const [aoDaiSize, setAoDaiSize] = useState<(typeof AO_DAI_SIZES)[number]>("M");
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+  const [compressing, setCompressing] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.files?.[0];
-    if (!raw) return;
+  async function handleFilesChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (raw.length === 0) return;
     setError(null);
-    try {
-      const compressed = await compressImageFile(raw);
-      setPhotoFile(compressed);
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(URL.createObjectURL(compressed));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Không thể xử lý ảnh này.");
+
+    const slots = MAX_PHOTOS - photos.length;
+    const picked = raw.slice(0, slots);
+    if (raw.length > picked.length) {
+      toast.info(`Chỉ chọn tối đa ${MAX_PHOTOS} ảnh, đã bỏ bớt ${raw.length - picked.length} ảnh.`);
     }
+
+    setCompressing(true);
+    const results = await Promise.all(
+      picked.map(async (file) => {
+        try {
+          return await compressImageFile(file);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Không thể xử lý ảnh này.");
+          return null;
+        }
+      }),
+    );
+    setCompressing(false);
+
+    const base = Date.now();
+    setPhotos((prev) => [
+      ...prev,
+      ...results.flatMap((file, i) =>
+        file ? [{ id: base + i, file, url: URL.createObjectURL(file) }] : [],
+      ),
+    ]);
+  }
+
+  function removePhoto(id: number) {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((p) => p.id !== id);
+    });
+  }
+
+  function makePrimary(id: number) {
+    setPhotos((prev) => {
+      const target = prev.find((p) => p.id === id);
+      return target ? [target, ...prev.filter((p) => p.id !== id)] : prev;
+    });
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
-    if (!photoFile) {
-      setError("Vui lòng chọn 1 ảnh cá nhân (chân dung hoặc toàn thân).");
+    if (photos.length === 0) {
+      setError("Vui lòng chọn ít nhất 1 ảnh cá nhân (chân dung hoặc toàn thân).");
       return;
     }
     if (!consentAccepted) {
@@ -56,6 +102,7 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
 
     setSubmitting(true);
     try {
+      setProgress("Đang lưu hồ sơ...");
       const fd = new FormData();
       fd.set("fullName", fullName);
       fd.set("contactPhone", contactPhone);
@@ -63,18 +110,35 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
       fd.set("heightCm", heightCm);
       fd.set("aoDaiSize", aoDaiSize);
       fd.set("consentAccepted", "true");
-      fd.set("photo", photoFile);
+      fd.set("photo", photos[0].file);
 
-      const res = await fetch("/api/staff/onboarding", {
-        method: "POST",
-        body: fd,
-      });
+      const res = await fetch("/api/staff/onboarding", { method: "POST", body: fd });
       const data = (await res.json()) as { ok?: boolean; error?: string; redirectTo?: string };
 
       if (!res.ok || !data.ok) {
         setError(data.error || "Lưu hồ sơ thất bại.");
         setSubmitting(false);
+        setProgress(null);
         return;
+      }
+
+      // Remaining photos go through the sequential photo endpoint (profile exists now).
+      let failed = 0;
+      for (let i = 1; i < photos.length; i += 1) {
+        setProgress(`Đang tải ảnh ${i + 1}/${photos.length}...`);
+        try {
+          const pfd = new FormData();
+          pfd.set("photo", photos[i].file);
+          const pres = await fetch("/api/staff/photos", { method: "POST", body: pfd });
+          if (!pres.ok) failed += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      if (failed > 0) {
+        toast.error(`${failed} ảnh chưa tải được. Bạn có thể thêm lại trong trang Hồ sơ.`);
+      } else {
+        toast.success("Hồ sơ đã hoàn tất!");
       }
 
       router.push(data.redirectTo || "/staff");
@@ -82,6 +146,7 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
     } catch {
       setError("Lỗi kết nối mạng. Vui lòng thử lại.");
       setSubmitting(false);
+      setProgress(null);
     }
   }
 
@@ -90,7 +155,7 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
       {error ? (
         <div
           role="alert"
-          className="rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3.5 text-sm text-[#4A4242]"
+          className="rounded-xl border border-blush-strong bg-blush/60 p-3.5 text-sm text-ink-secondary"
         >
           {error}
         </div>
@@ -127,7 +192,7 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
             id="gender"
             value={gender}
             onChange={(e) => setGender(e.target.value as "MALE" | "FEMALE")}
-            className="flex h-11 w-full rounded-xl border border-[#C8D5B9] bg-white px-3 text-sm text-[#3E4A42] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B7C9B5]"
+            className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-line-strong"
           >
             <option value="FEMALE">Nữ (nhà gái)</option>
             <option value="MALE">Nam (nhà trai)</option>
@@ -139,6 +204,7 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
           <Input
             id="heightCm"
             type="number"
+            inputMode="numeric"
             min={140}
             max={210}
             value={heightCm}
@@ -154,7 +220,7 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
           id="aoDaiSize"
           value={aoDaiSize}
           onChange={(e) => setAoDaiSize(e.target.value as (typeof AO_DAI_SIZES)[number])}
-          className="flex h-11 w-full rounded-xl border border-[#C8D5B9] bg-white px-3 text-sm text-[#3E4A42] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B7C9B5]"
+          className="flex h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-line-strong"
         >
           {AO_DAI_SIZES.map((s) => (
             <option key={s} value={s}>
@@ -165,58 +231,92 @@ export function OnboardingForm({ defaultFullName, defaultPhone }: OnboardingForm
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="photo">6. Ảnh cá nhân (chân dung / toàn thân — không phải avatar)</Label>
-        <p className="text-xs text-[#4A4242]/80">
-          Hệ thống tự nén nhẹ WebP sắc nét. Sau khi vào trang Hồ sơ bạn có thể tải thêm tối đa 4
-          ảnh.
+        <Label>6. Ảnh cá nhân (chân dung / toàn thân — không phải avatar)</Label>
+        <p className="text-xs text-ink-secondary">
+          Chọn cùng lúc tối đa {MAX_PHOTOS} ảnh. Ảnh đầu tiên là ảnh chính cho Admin duyệt. Hệ thống tự
+          nén nhẹ trước khi tải.
         </p>
-        <label
-          htmlFor="photo"
-          className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[#B7C9B5] bg-[#EEF3E8]/50 p-5 text-center transition-colors hover:bg-[#EEF3E8]"
-        >
-          {previewUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={previewUrl}
-              alt="Xem trước ảnh cá nhân"
-              className="max-h-56 rounded-xl object-contain shadow-sm"
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-2 text-[#4A4242]">
-              <Upload className="h-6 w-6 text-[#3E4A42]" />
-              <span className="text-sm font-medium text-[#3E4A42]">Bấm để chọn ảnh từ điện thoại</span>
-              <span className="text-xs">JPG, PNG, WebP (tự nén gọn trước khi tải)</span>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {photos.map((p, index) => (
+            <div key={p.id} className="overflow-hidden rounded-xl border border-line bg-surface">
+              <div className="relative aspect-[3/4]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.url} alt={`Ảnh ${index + 1}`} className="h-full w-full object-cover" />
+                {index === 0 ? (
+                  <span className="absolute top-2 left-2 inline-flex items-center gap-1 rounded-md bg-ink px-2 py-0.5 text-[11px] font-medium text-paper">
+                    <Star className="h-3 w-3 fill-current" />
+                    Ảnh chính
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex items-center justify-between px-1.5 py-1">
+                {index > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => makePrimary(p.id)}
+                    className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-ink hover:bg-sage-soft"
+                  >
+                    <Star className="h-3.5 w-3.5" />
+                    Chính
+                  </button>
+                ) : (
+                  <span className="px-2 text-[11px] text-ink-secondary">Đang là chính</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => removePhoto(p.id)}
+                  aria-label="Bỏ ảnh"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
-          )}
-          <input
-            id="photo"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
+          ))}
+
+          {photos.length < MAX_PHOTOS ? (
+            <label
+              htmlFor="photos"
+              className="flex aspect-[3/4] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-sage-soft/50 p-3 text-center text-xs font-semibold text-ink transition-colors hover:bg-sage-soft"
+            >
+              <ImagePlus className="h-6 w-6" />
+              <span>{compressing ? "Đang nén..." : "Chọn ảnh"}</span>
+              <span className="text-[11px] font-normal text-ink-secondary">
+                Chọn nhiều ảnh cùng lúc
+              </span>
+              <input
+                id="photos"
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleFilesChange}
+                className="hidden"
+              />
+            </label>
+          ) : null}
+        </div>
       </div>
 
-      <label className="flex items-start gap-3 rounded-xl border border-[#C8D5B9] bg-[#FAF9F5] p-3.5 text-xs leading-relaxed text-[#4A4242]">
+      <label className="flex items-start gap-3 rounded-xl border border-line bg-paper p-3.5 text-xs leading-relaxed text-ink-secondary">
         <input
           type="checkbox"
           checked={consentAccepted}
           onChange={(e) => setConsentAccepted(e.target.checked)}
-          className="mt-0.5 h-4 w-4 accent-[#3E4A42]"
+          className="mt-0.5 h-4 w-4 accent-ink"
           required
         />
         <span>
           Tôi đồng ý cho <strong>Hoài Thương Wedding</strong> thu thập và lưu trữ thông tin cá nhân
           (họ tên, SĐT, số đo, ảnh cá nhân) phục vụ điều phối show bưng quả theo{" "}
           <strong>Luật Bảo vệ dữ liệu cá nhân 2025 &amp; Nghị định 356/2025/NĐ-CP</strong>. Ảnh chỉ
-          hiển thị nội bộ cho chính tôi và Quản trị viên; tôi có quyền xuất hoặc yêu cầu xóa dữ
-          liệu bất cứ lúc nào.
+          hiển thị nội bộ cho chính tôi và Quản trị viên; tôi có quyền xuất hoặc yêu cầu xóa dữ liệu
+          bất cứ lúc nào.
         </span>
       </label>
 
-      <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-        {submitting ? "Đang nén & lưu hồ sơ..." : "Hoàn tất hồ sơ (1 lần duy nhất)"}
+      <Button type="submit" className="w-full" size="lg" disabled={submitting || compressing}>
+        {submitting ? (progress ?? "Đang lưu hồ sơ...") : "Hoàn tất hồ sơ (1 lần duy nhất)"}
       </Button>
     </form>
   );

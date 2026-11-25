@@ -7,6 +7,7 @@ import { CalendarClock, CheckCircle2, MapPin, Shirt, Users, Wallet } from "lucid
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/toast";
 import { formatVietnamDateTime, formatVnd } from "@/lib/utils";
 import { registerForShowAction } from "@/server/actions/registrations";
 
@@ -39,82 +40,65 @@ export function StaffShowFeed({
   staffGender: "MALE" | "FEMALE";
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [onlyMatching, setOnlyMatching] = useState(true);
-  const [notice, setNotice] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filtered = onlyMatching
-    ? shows.filter((s) =>
-        staffGender === "MALE" ? s.requiredMale > 0 : s.requiredFemale > 0,
-      )
+    ? shows.filter((s) => (staffGender === "MALE" ? s.requiredMale > 0 : s.requiredFemale > 0))
     : shows;
 
   function handleRegister(showId: string) {
-    setNotice(null);
     setBusyId(showId);
     startTransition(async () => {
       const res = await registerForShowAction(showId);
       setBusyId(null);
       if (!res.ok) {
-        setNotice({ type: "err", text: res.error || "Đăng ký thất bại." });
+        toast.error(res.error || "Đăng ký thất bại.");
         return;
       }
-      setNotice({ type: "ok", text: res.message || "Đăng ký thành công!" });
+      toast.success(res.message || "Đăng ký thành công!");
       router.refresh();
     });
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setOnlyMatching(true)}
-            className={
-              onlyMatching
-                ? "rounded-full bg-[#3E4A42] px-3.5 py-1.5 text-xs font-semibold text-white"
-                : "rounded-full border border-[#C8D5B9] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#3E4A42]"
-            }
-          >
-            Phù hợp với tôi ({staffGender === "MALE" ? "Nam" : "Nữ"})
-          </button>
-          <button
-            type="button"
-            onClick={() => setOnlyMatching(false)}
-            className={
-              !onlyMatching
-                ? "rounded-full bg-[#3E4A42] px-3.5 py-1.5 text-xs font-semibold text-white"
-                : "rounded-full border border-[#C8D5B9] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#3E4A42]"
-            }
-          >
-            Tất cả show ({shows.length})
-          </button>
-        </div>
-      </div>
-
-      {notice ? (
-        <div
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOnlyMatching(true)}
           className={
-            notice.type === "ok"
-              ? "rounded-xl border border-[#B7C9B5] bg-[#EEF3E8] p-3.5 text-xs text-[#3E4A42]"
-              : "rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3.5 text-xs text-[#4A4242]"
+            onlyMatching
+              ? "min-h-10 rounded-full bg-ink px-4 text-xs font-semibold text-paper"
+              : "min-h-10 rounded-full border border-line bg-surface px-4 text-xs font-semibold text-ink hover:bg-sage-soft"
           }
         >
-          {notice.text}
-        </div>
-      ) : null}
+          Phù hợp với tôi ({staffGender === "MALE" ? "Nam" : "Nữ"})
+        </button>
+        <button
+          type="button"
+          onClick={() => setOnlyMatching(false)}
+          className={
+            !onlyMatching
+              ? "min-h-10 rounded-full bg-ink px-4 text-xs font-semibold text-paper"
+              : "min-h-10 rounded-full border border-line bg-surface px-4 text-xs font-semibold text-ink hover:bg-sage-soft"
+          }
+        >
+          Tất cả show ({shows.length})
+        </button>
+      </div>
 
       {filtered.length === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-sm text-[#4A4242]">
+          <CardContent className="p-8 text-center text-sm text-ink-secondary">
             Hiện chưa có show mới đang mở tuyển cho đội hình{" "}
             {staffGender === "MALE" ? "Nam" : "Nữ"}. Hãy quay lại sau nhé!
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {filtered.map((show) => {
             const remainMale = Math.max(0, show.requiredMale - show.counts.approvedMale);
             const remainFemale = Math.max(0, show.requiredFemale - show.counts.approvedFemale);
@@ -126,75 +110,80 @@ export function StaffShowFeed({
               show.myRegistrationStatus === "WAITLIST";
 
             return (
-              <Card key={show.id}>
-                <CardContent className="space-y-3.5 p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={show.status === "OPEN" ? "sage" : "blush"}>
-                          {show.status === "OPEN" ? "Đang mở" : "Đã đủ người"}
-                        </Badge>
-                        <Badge variant="neutral">{show.district}</Badge>
+              <Card key={show.id} className="flex flex-col">
+                <CardContent className="flex flex-1 flex-col justify-between gap-4 p-5">
+                  <div className="space-y-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <Badge variant={show.status === "OPEN" ? "sage" : "blush"}>
+                            {show.status === "OPEN" ? "Đang mở" : "Đã đủ người"}
+                          </Badge>
+                          <Badge variant="neutral">{show.district}</Badge>
+                        </div>
+                        <h2 className="font-serif text-xl font-semibold leading-snug text-ink">
+                          <Link href={`/shows/${show.id}`} className="hover:underline">
+                            {show.title}
+                          </Link>
+                        </h2>
                       </div>
-                      <h2 className="text-base font-bold text-[#3E4A42]">
-                        <Link href={`/shows/${show.id}`} className="hover:underline">
-                          {show.title}
-                        </Link>
-                      </h2>
+
+                      <div className="shrink-0 text-right">
+                        <p className="text-lg font-extrabold tabular-nums text-ink">
+                          {formatVnd(show.wagePerPerson)}
+                        </p>
+                        <p className="text-[11px] text-ink-secondary">/ người</p>
+                      </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-base font-extrabold text-[#3E4A42]">
-                        {formatVnd(show.wagePerPerson)}
-                      </p>
-                      <p className="text-[11px] text-[#4A4242]">/ người</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 text-xs text-[#4A4242]">
-                    <p className="flex items-center gap-2">
-                      <CalendarClock className="h-3.5 w-3.5 shrink-0 text-[#3E4A42]" />
-                      <span>
-                        Có mặt: <strong className="text-[#3E4A42]">{formatVietnamDateTime(show.gatherAt)}</strong>
-                      </span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <MapPin className="h-3.5 w-3.5 shrink-0 text-[#3E4A42]" />
-                      <span>
-                        {show.address}, {show.district}
-                      </span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Users className="h-3.5 w-3.5 shrink-0 text-[#3E4A42]" />
-                      <span>
-                        {show.requiredMale > 0 ? `Nam: còn ${remainMale}/${show.requiredMale}` : ""}
-                        {show.requiredMale > 0 && show.requiredFemale > 0 ? " · " : ""}
-                        {show.requiredFemale > 0
-                          ? `Nữ: còn ${remainFemale}/${show.requiredFemale}`
-                          : ""}
-                      </span>
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Shirt className="h-3.5 w-3.5 shrink-0 text-[#3E4A42]" />
-                      <span>{show.dressCode}</span>
-                    </p>
-                    {show.allowanceNote ? (
+                    <div className="space-y-1.5 border-t border-line pt-3 text-xs text-ink-secondary">
                       <p className="flex items-center gap-2">
-                        <Wallet className="h-3.5 w-3.5 shrink-0 text-[#3E4A42]" />
-                        <span>Phụ cấp: {show.allowanceNote}</span>
+                        <CalendarClock className="h-3.5 w-3.5 shrink-0 text-ink" />
+                        <span>
+                          Có mặt:{" "}
+                          <strong className="tabular-nums text-ink">
+                            {formatVietnamDateTime(show.gatherAt)}
+                          </strong>
+                        </span>
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5 shrink-0 text-ink" />
+                        <span className="tabular-nums font-medium text-ink">
+                          {show.requiredMale > 0 ? `Nam: còn ${remainMale}/${show.requiredMale}` : ""}
+                          {show.requiredMale > 0 && show.requiredFemale > 0 ? " · " : ""}
+                          {show.requiredFemale > 0
+                            ? `Nữ: còn ${remainFemale}/${show.requiredFemale}`
+                            : ""}
+                        </span>
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-ink" />
+                        <span>
+                          {show.address}, {show.district}
+                        </span>
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Shirt className="h-3.5 w-3.5 shrink-0 text-ink" />
+                        <span>{show.dressCode}</span>
+                      </p>
+                      {show.allowanceNote ? (
+                        <p className="flex items-center gap-2">
+                          <Wallet className="h-3.5 w-3.5 shrink-0 text-ink" />
+                          <span>Phụ cấp: {show.allowanceNote}</span>
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {show.notes ? (
+                      <p className="rounded-lg border border-line bg-paper p-2.5 text-xs text-ink-secondary">
+                        {show.notes}
                       </p>
                     ) : null}
                   </div>
 
-                  {show.notes ? (
-                    <p className="rounded-xl bg-[#FAF9F5] p-2.5 text-xs text-[#4A4242]">
-                      {show.notes}
-                    </p>
-                  ) : null}
-
                   <div className="pt-1">
                     {alreadyApplied ? (
-                      <div className="flex items-center justify-between rounded-xl bg-[#EEF3E8] px-4 py-2.5 text-xs font-semibold text-[#3E4A42]">
+                      <div className="flex items-center justify-between rounded-xl bg-sage-soft px-4 py-2.5 text-xs font-semibold text-ink">
                         <span className="inline-flex items-center gap-1.5">
                           <CheckCircle2 className="h-4 w-4" />
                           {show.myRegistrationStatus === "APPROVED"

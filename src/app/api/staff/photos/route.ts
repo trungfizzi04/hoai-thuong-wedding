@@ -197,3 +197,46 @@ export async function DELETE(request: Request) {
     message: "Đã xóa ảnh khỏi hồ sơ và Cloudinary.",
   });
 }
+
+/**
+ * PATCH /api/staff/photos  body: { primaryIndex: number }
+ * Moves the chosen photo to slot 0 (primary photo shown first to Admin).
+ */
+export async function PATCH(request: Request) {
+  const auth = await getCurrentUser();
+  if (!auth) {
+    return NextResponse.json({ error: "Bạn cần đăng nhập trước." }, { status: 401 });
+  }
+  if (!auth.profile) {
+    return NextResponse.json({ error: "Không tìm thấy hồ sơ." }, { status: 404 });
+  }
+
+  const body = (await request.json().catch(() => null)) as { primaryIndex?: unknown } | null;
+  const primaryIndex = typeof body?.primaryIndex === "number" ? body.primaryIndex : -1;
+  const items = [...(auth.profile.photoItems ?? [])];
+
+  if (!Number.isInteger(primaryIndex) || primaryIndex < 0 || primaryIndex >= items.length) {
+    return NextResponse.json({ error: "Vị trí ảnh không hợp lệ." }, { status: 400 });
+  }
+  if (primaryIndex === 0) {
+    return NextResponse.json({ ok: true, photoCount: items.length, message: "Ảnh này đã là ảnh chính." });
+  }
+
+  const [chosen] = items.splice(primaryIndex, 1);
+  const nextItems = [chosen, ...items];
+
+  await getDb()
+    .update(staffProfiles)
+    .set({
+      photoItems: nextItems,
+      primaryPhotoPublicId: nextItems[0]?.publicId ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(staffProfiles.userId, auth.user.id));
+
+  return NextResponse.json({
+    ok: true,
+    photoCount: nextItems.length,
+    message: "Đã đặt làm ảnh chính.",
+  });
+}

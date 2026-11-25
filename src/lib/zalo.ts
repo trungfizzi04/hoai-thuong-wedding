@@ -25,15 +25,6 @@ export interface ZaloUserProfile {
   is_sensitive?: boolean;
 }
 
-export interface ZaloSpikeSession {
-  id: string;
-  name: string;
-  pictureUrl: string | null;
-  isSensitive: boolean | null;
-  rawProfile: ZaloUserProfile;
-  authenticatedAt: string;
-}
-
 const VERIFIER_CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
 /**

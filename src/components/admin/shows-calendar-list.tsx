@@ -123,7 +123,7 @@ export function ShowsCalendarList({
   return (
     <div className="space-y-5">
       {notice ? (
-        <div className="rounded-xl border border-[#E8B4B8] bg-[#F4D6D6]/60 p-3 text-xs text-[#4A4242]">
+        <div className="rounded-xl border border-blush-strong bg-blush/60 p-3 text-xs text-ink-secondary">
           {notice}
         </div>
       ) : null}
@@ -137,8 +137,8 @@ export function ShowsCalendarList({
               onClick={() => setFilter(f.key)}
               className={
                 filter === f.key
-                  ? "rounded-full bg-[#3E4A42] px-3.5 py-1.5 text-xs font-semibold text-white"
-                  : "rounded-full border border-[#C8D5B9] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#3E4A42] hover:bg-[#EEF3E8]"
+                  ? "rounded-full bg-ink px-3.5 py-1.5 text-xs font-semibold text-paper"
+                  : "rounded-full border border-line bg-surface px-3.5 py-1.5 text-xs font-semibold text-ink hover:bg-sage-soft"
               }
             >
               {f.label}
@@ -148,7 +148,7 @@ export function ShowsCalendarList({
 
         <Link
           href="/admin/shows/new"
-          className="inline-flex h-10 items-center justify-center rounded-xl bg-[#E8B4B8] px-4 text-xs font-bold text-[#3E4A42] shadow-sm transition-colors hover:bg-[#F4D6D6]"
+          className="inline-flex h-10 items-center justify-center rounded-xl bg-blush-strong px-4 text-xs font-bold text-ink shadow-sm transition-colors hover:bg-blush"
         >
           + Tạo Show mới
         </Link>
@@ -156,7 +156,7 @@ export function ShowsCalendarList({
 
       {grouped.size === 0 ? (
         <Card>
-          <CardContent className="p-8 text-center text-sm text-[#4A4242]">
+          <CardContent className="p-8 text-center text-sm text-ink-secondary">
             Chưa có show nào trong mục này. Bấm <strong>+ Tạo Show mới</strong> để bắt đầu!
           </CardContent>
         </Card>
@@ -165,8 +165,8 @@ export function ShowsCalendarList({
           {Array.from(grouped.entries()).map(([dateKey, dayShows]) => (
             <section key={dateKey} className="space-y-3">
               <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-[#3E4A42]" />
-                <h2 className="text-sm font-bold text-[#3E4A42]">
+                <CalendarDays className="h-4 w-4 text-ink" />
+                <h2 className="text-sm font-bold text-ink">
                   Ngày {dateKey.split("-").reverse().join("/")} ({dayShows.length} show)
                 </h2>
               </div>
@@ -180,7 +180,7 @@ export function ShowsCalendarList({
                         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                           <div className="space-y-1.5">
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-base font-bold text-[#3E4A42]">
+                              <h3 className="text-base font-bold text-ink">
                                 <Link href={`/admin/shows/${show.id}`} className="hover:underline">
                                   {show.title}
                                 </Link>
@@ -192,15 +192,15 @@ export function ShowsCalendarList({
                                 </Badge>
                               ) : null}
                             </div>
-                            <p className="flex items-center gap-1.5 text-xs text-[#4A4242]">
+                            <p className="flex items-center gap-1.5 text-xs text-ink-secondary">
                               <Clock className="h-3.5 w-3.5 shrink-0" />
                               Có mặt: <strong>{formatVietnamDateTime(show.gatherAt)}</strong>
                             </p>
-                            <p className="flex items-center gap-1.5 text-xs text-[#4A4242]">
+                            <p className="flex items-center gap-1.5 text-xs text-ink-secondary">
                               <MapPin className="h-3.5 w-3.5 shrink-0" />
                               {show.address}, {show.district}
                             </p>
-                            <p className="flex flex-wrap items-center gap-3 text-xs text-[#3E4A42]">
+                            <p className="flex flex-wrap items-center gap-3 text-xs text-ink">
                               <span className="inline-flex items-center gap-1 font-semibold">
                                 <Users className="h-3.5 w-3.5" />
                                 Nam: {show.counts.approvedMale}/{show.requiredMale} · Nữ:{" "}
@@ -210,7 +210,7 @@ export function ShowsCalendarList({
                                 Cát-xê: <strong>{formatVnd(show.wagePerPerson)}</strong>
                               </span>
                               {show.clientName ? (
-                                <span className="text-[#4A4242]">Khách: {show.clientName}</span>
+                                <span className="text-ink-secondary">Khách: {show.clientName}</span>
                               ) : null}
                             </p>
                           </div>
@@ -218,7 +218,7 @@ export function ShowsCalendarList({
                           <div className="flex flex-wrap gap-2">
                             <Link
                               href={`/admin/shows/${show.id}`}
-                              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#C8D5B9] px-3 text-xs font-bold text-[#3E4A42] shadow-sm hover:bg-[#B7C9B5]"
+                              className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-sage px-3 text-xs font-bold text-ink shadow-sm hover:bg-sage-muted"
                             >
                               <Users className="h-3.5 w-3.5" />
                               Duyệt ứng viên
@@ -236,7 +236,7 @@ export function ShowsCalendarList({
 
                             <Link
                               href={`/admin/shows/${show.id}/edit`}
-                              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#B7C9B5] bg-white px-3 text-xs font-semibold text-[#3E4A42] hover:bg-[#EEF3E8]"
+                              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-line-strong bg-surface px-3 text-xs font-semibold text-ink hover:bg-sage-soft"
                             >
                               <Edit3 className="h-3.5 w-3.5" />
                               Sửa
@@ -245,7 +245,7 @@ export function ShowsCalendarList({
                             <Link
                               href={`/shows/${show.id}`}
                               target="_blank"
-                              className="inline-flex h-9 items-center gap-1 rounded-xl border border-[#C8D5B9] bg-[#FAF9F5] px-3 text-xs font-medium text-[#4A4242] hover:bg-[#EEF3E8]"
+                              className="inline-flex h-9 items-center gap-1 rounded-xl border border-line bg-paper px-3 text-xs font-medium text-ink-secondary hover:bg-sage-soft"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                               Link công khai
